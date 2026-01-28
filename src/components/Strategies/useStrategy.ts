@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Strategy as StrategyModel } from './useStrategies'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 
@@ -7,6 +7,47 @@ interface Params {
   selectedAction: string
   walletAddress: string
   fetchStrategyDetails: (strategyId: string, wallet: string) => Promise<unknown>
+}
+
+interface DeframeTokenAmount {
+  value: string
+  decimals: number
+  humanized: string
+  symbol: string
+}
+
+interface DeframeHistoricItem {
+  payload: {
+    amount: DeframeTokenAmount
+    amountBeforeFees: string
+    fromAddress: string
+    transactionHash: string
+    blockNumber: number
+    logIndex: number
+    strategyId: string
+  }
+  action: string
+  createdAt: string
+  deletedAt: string | null
+  source: string
+  updatedAt: string
+  wallet: string
+}
+
+interface DeframeSpotPosition {
+  currentPosition: DeframeTokenAmount
+  underlyingBalanceUSD: number
+  inceptionApy: number
+  avgApy: number
+  apy: number
+  profit: DeframeTokenAmount
+  principal: DeframeTokenAmount
+}
+
+interface DeframeStrategyDetailsResponse {
+  historic: DeframeHistoricItem[]
+  spotPosition: DeframeSpotPosition
+  strategy: StrategyModel
 }
 
 interface DeframeBytecodeResponse {
@@ -26,7 +67,8 @@ interface DeframeBytecodeResponse {
 
 export function useStrategy({ strategy, selectedAction, walletAddress, fetchStrategyDetails }: Params) {
   const options = Array.isArray(strategy.availableActions) ? strategy.availableActions : []
-  const [details, setDetails] = useState<unknown>(null)
+  const [details, setDetails] = useState<DeframeStrategyDetailsResponse | null>(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
   const isFetched = useRef(false)
 const { getClientForChain } = useSmartWallets();
 
@@ -35,23 +77,28 @@ const { getClientForChain } = useSmartWallets();
   const [bytecodesLoading, setBytecodesLoading] = useState(false)
   const [bytecodesError, setBytecodesError] = useState<string | null>(null)
 
+  const refreshDetails = useCallback(async (): Promise<void> => {
+    if (!walletAddress) return
+    try {
+      setDetailsLoading(true)
+      const next = await fetchStrategyDetails(strategy.id, walletAddress)
+      setDetails(next as DeframeStrategyDetailsResponse | null)
+    } finally {
+      setDetailsLoading(false)
+    }
+  }, [fetchStrategyDetails, strategy.id, walletAddress])
+
   useEffect(() => {
     if (!walletAddress) return
     if (isFetched.current) return
     isFetched.current = true
 
-    void fetchStrategyDetails(strategy.id, walletAddress).then((details) => {
-      setDetails(details)
-    })
-  }, [strategy.id, walletAddress, fetchStrategyDetails])
+    void refreshDetails()
+  }, [refreshDetails, walletAddress])
 
   let avgApy: number | null = null
-  if (details && typeof details === 'object') {
-    const spotPosition = (details as Record<string, unknown>).spotPosition
-    if (spotPosition && typeof spotPosition === 'object') {
-      const maybeAvgApy = (spotPosition as Record<string, unknown>).avgApy
-      if (typeof maybeAvgApy === 'number') avgApy = maybeAvgApy
-    }
+  if (details) {
+    avgApy = typeof details.spotPosition.avgApy === 'number' ? details.spotPosition.avgApy : null
   }
   const avgApyPct = avgApy === null ? null : avgApy * 100
 
@@ -132,6 +179,8 @@ const { getClientForChain } = useSmartWallets();
   return {
     options,
     details,
+    detailsLoading,
+    refreshDetails,
     avgApyPct,
     underlyingDecimals,
     amount,

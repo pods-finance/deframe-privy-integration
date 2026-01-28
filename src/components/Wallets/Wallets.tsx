@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useCreateWallet, useWallets } from '@privy-io/react-auth'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { createPublicClient, http } from 'viem';
-import { polygon } from 'viem/chains';
+import { base } from 'viem/chains';
 
 const Wallets = () => {
     const { createWallet } = useCreateWallet();
@@ -33,34 +33,41 @@ const Wallets = () => {
         }
         const fetchBytecode = async () => {
             const publicClient = createPublicClient({
-                chain: polygon,
+                chain: base,
                 transport: http(),
             })
+            console.log({ publicClient })
             const bytecode = await publicClient.getCode({
                 address: client.account.address,
             })
             console.log({ bytecode })
             if (bytecode === '0x' || !bytecode) {
                 console.log('Wallet was not been deployed!')
-                const chainClient = await getClientForChain({
-                    id: 137
-                });
-                if (!chainClient) {
-                    console.log('Chain client not found')
+                try {
+                    const chainClient = await getClientForChain({
+                        id: 8453
+                    });
+                    console.log({ chainClient })
+                    if (!chainClient) {
+                        console.log('Chain client not found')
+                        return
+                    }
+                    const tx: unknown = await chainClient.sendTransaction({
+                        to: client.account.address,
+                        value: 0n,
+                        data: '0x',
+                    })
+                    console.log({ tx })
+                } catch (e) {
+                    console.log('Chain client not found', e)
                     return
                 }
-                const tx = await chainClient.sendTransaction({
-                    to: client.account.address,
-                    value: 0n,
-                    data: '0x',
-                })
-                console.log({ tx })
             } else {
                 console.log('Wallet was been deployed!')
             }
         }
         void fetchBytecode()
-    }, [client?.account.address])
+    }, [client?.account.address, getClientForChain])
 
     return (
         <div>

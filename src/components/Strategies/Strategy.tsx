@@ -12,6 +12,9 @@ interface Props {
 const Strategy = ({ strategy, selectedAction, onSelectAction, fetchStrategyDetails, walletAddress }: Props) => {
   const {
     options,
+    details,
+    detailsLoading,
+    refreshDetails,
     avgApyPct,
     underlyingDecimals,
     amount,
@@ -25,6 +28,9 @@ const Strategy = ({ strategy, selectedAction, onSelectAction, fetchStrategyDetai
     walletAddress,
     fetchStrategyDetails,
   })
+
+  const currentPositionValue = details?.spotPosition.currentPosition.value ?? '—'
+  const profitValue = details?.spotPosition.profit.value ?? '—'
 
   return (
     <div className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
@@ -58,6 +64,30 @@ const Strategy = ({ strategy, selectedAction, onSelectAction, fetchStrategyDetai
             <span className="font-medium text-slate-200">
               {avgApyPct === null ? '—' : `${avgApyPct.toFixed(2)}%`}
             </span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              void refreshDetails()
+            }}
+            disabled={!walletAddress || detailsLoading}
+            className="inline-flex items-center justify-center rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-xs font-medium text-slate-200 hover:bg-slate-950/70 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {detailsLoading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
+          <div className="flex justify-between gap-2">
+            <span>Position</span>
+            <span className="text-slate-200">{currentPositionValue}</span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span>Profit</span>
+            <span className="text-slate-200">{profitValue}</span>
           </div>
         </div>
 

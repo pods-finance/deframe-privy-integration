@@ -21,14 +21,14 @@ Create a `.env` file in the project root with the following variables. All must 
 | Variable | Description | Where to get it |
 |----------|-------------|-----------------|
 | `VITE_APP_PRIVY_APP_ID` | Privy application identifier | [Privy Dashboard](https://dashboard.privy.io/) |
-| `VITE_APP_DEFRAME_API_URL` | Base API URL for Deframe | [Deframe Dashboard](https://www.deframe.io/dashboard) — e.g. `https://sandbox.deframe.io` or `http://localhost:4001` for local |
+| `VITE_APP_DEFRAME_API_URL` | Base API URL for Deframe | [Deframe Dashboard](https://www.deframe.io/dashboard) — e.g. `https://api.deframe.io` |
 | `VITE_APP_DEFRAME_API_KEY` | API key for Deframe | [Deframe Dashboard](https://www.deframe.io/dashboard) |
 
 Example `.env`:
 
 ```env
 VITE_APP_PRIVY_APP_ID='your-privy-app-id'
-VITE_APP_DEFRAME_API_URL='https://sandbox.deframe.io'
+VITE_APP_DEFRAME_API_URL='https://api.deframe.io'
 VITE_APP_DEFRAME_API_KEY='your-deframe-api-key'
 ```
 

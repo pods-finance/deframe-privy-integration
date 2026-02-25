@@ -28,7 +28,7 @@ const Strategies = ({ walletAddress }: Props) => {
 
             <div className="flex flex-col gap-3">
                 {strategies.map((s) => {
-                    const firstAction = s.availableActions.length > 0 ? s.availableActions[0] : ''
+                    const firstAction = (s.availableActions ?? [])[0] ?? ''
                     const selectedAction = selectedActionById[s.id] ?? firstAction
 
                     return (

@@ -4,7 +4,7 @@ export interface Strategy {
   id: string
   protocol: string
   assetName: string
-  availableActions: string[]
+  availableActions?: string[]
   logourl?: string
   paused?: boolean
   network?: string

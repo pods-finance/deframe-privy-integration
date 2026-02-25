@@ -173,9 +173,8 @@ async function resolveWalletProvider(wallet: ActiveWalletShape): Promise<Eip1193
 const EarnWidgetHost = () => {
   const { ready, authenticated, login, logout, user } = usePrivy()
   const { wallets } = useWallets()
-  const smartWalletData = useSmartWallets() as SmartWalletData
+  const { client: smartWalletClient, getClientForChain } = useSmartWallets() as SmartWalletData
   const { createWallet } = useCreateWallet()
-  const { client: smartWalletClient, getClientForChain } = smartWalletData
 
   const [routeName, setRouteName] = useState('Overview')
   const [txLogs, setTxLogs] = useState<string[]>([])

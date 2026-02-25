@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# Deframe + Privy Integration
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React app that combines [Privy](https://privy.io) embedded wallets with the [Deframe](https://deframe.io) strategy layer to give users a Web2-style experience for accessing DeFi yield strategies. Users can deposit into yield strategies (lending, staking, protocol yields) without interacting directly with smart contracts or managing complex transaction flows.
 
-Currently, two official plugins are available:
+**Tech stack:** React 19 · TypeScript · Vite · Tailwind CSS · Privy · Deframe SDK
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Requirements
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- **Node.js** (v18+)
+- **Yarn** (or npm/pnpm)
+- Accounts for [Privy](https://dashboard.privy.io) and [Deframe](https://www.deframe.io/dashboard) to obtain API keys
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Environment Variables
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Create a `.env` file in the project root with the following variables. All must be prefixed with `VITE_` to be available in the client.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Variable | Description | Where to get it |
+|----------|-------------|-----------------|
+| `VITE_APP_PRIVY_APP_ID` | Privy application identifier | [Privy Dashboard](https://dashboard.privy.io/) |
+| `VITE_APP_DEFRAME_API_URL` | Base API URL for Deframe | [Deframe Dashboard](https://www.deframe.io/dashboard) — e.g. `https://sandbox.deframe.io` or `http://localhost:4001` for local |
+| `VITE_APP_DEFRAME_API_KEY` | API key for Deframe | [Deframe Dashboard](https://www.deframe.io/dashboard) |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Example `.env`:
+
+```env
+VITE_APP_PRIVY_APP_ID='your-privy-app-id'
+VITE_APP_DEFRAME_API_URL='https://sandbox.deframe.io'
+VITE_APP_DEFRAME_API_KEY='your-deframe-api-key'
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## How to Run
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Install dependencies
+
+```bash
+yarn
 ```
+
+### 2. Configure environment
+
+Create `.env` and set the variables above. Without them, the app will not run correctly.
+
+### 3. Start the development server
+
+```bash
+yarn dev
+```
+
+The app will be available at `http://localhost:5173` (or the port shown in the terminal).
+
+### Other scripts
+
+| Command | Description |
+|---------|-------------|
+| `yarn build` | Production build |
+| `yarn preview` | Preview the production build locally |
+| `yarn lint` | Run ESLint |
+
+---
+
+## Resources
+
+- [Deframe documentation](https://docs.deframe.io/)
+- [Privy Wallets documentation](https://docs.privy.io/wallets)

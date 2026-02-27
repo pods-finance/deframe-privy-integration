@@ -4,12 +4,13 @@ import { useState } from 'react';
 import Auth from '../Auth';
 import Wallets from '../Wallets';
 import Strategies from '../Strategies';
+import Transfer from '../Transfer/Transfer';
 import EarnWidgetHost from '../EarnWidgetHost';
 
 const YourApp = () => {
     const { ready, authenticated, user, logout } = usePrivy();
     const { client } = useSmartWallets();
-    const [activeTab, setActiveTab] = useState<'app' | 'deframe'>('app');
+    const [activeTab, setActiveTab] = useState<'app' | 'transfer' | 'deframe'>('app');
     if (!ready) {
         return <div>Loading...</div>;
     }
@@ -40,6 +41,19 @@ const YourApp = () => {
                         <button
                             type="button"
                             onClick={() => {
+                                setActiveTab('transfer');
+                            }}
+                            className={`rounded-lg px-3 py-1 text-sm font-medium ${
+                                activeTab === 'transfer'
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'border border-slate-800 text-slate-300 hover:text-slate-100'
+                            }`}
+                        >
+                            Transfer
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
                                 setActiveTab('deframe');
                             }}
                             className={`rounded-lg px-3 py-1 text-sm font-medium ${
@@ -63,6 +77,11 @@ const YourApp = () => {
                     <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
                         <Wallets />
                         <Strategies walletAddress={client?.account.address} />
+                    </div>
+                ) : activeTab === 'transfer' ? (
+                    <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+                        <Wallets />
+                        <Transfer walletAddress={client?.account.address} />
                     </div>
                 ) : (
                     <EarnWidgetHost />

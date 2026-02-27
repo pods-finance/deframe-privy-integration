@@ -73,6 +73,10 @@ export function useStrategy({ strategy, selectedAction, walletAddress, fetchStra
 const { getClientForChain } = useSmartWallets();
 
   const [amount, setAmount] = useState('')
+  const [fromTokenAddress, setFromTokenAddress] = useState('')
+  const [fromChainId, setFromChainId] = useState('')
+  const [toTokenAddress, setToTokenAddress] = useState('')
+  const [toChainId, setToChainId] = useState('')
   const [bytecodes, setBytecodes] = useState<DeframeBytecodeResponse | null>(null)
   const [bytecodesLoading, setBytecodesLoading] = useState(false)
   const [bytecodesError, setBytecodesError] = useState<string | null>(null)
@@ -134,6 +138,10 @@ const { getClientForChain } = useSmartWallets();
       url.searchParams.set('action', selectedAction)
       url.searchParams.set('wallet', walletAddress)
       url.searchParams.set('amount', amount.trim())
+      if (fromTokenAddress.trim()) url.searchParams.set('fromTokenAddress', fromTokenAddress.trim())
+      if (fromChainId.trim()) url.searchParams.set('fromChainId', fromChainId.trim())
+      if (toTokenAddress.trim()) url.searchParams.set('toTokenAddress', toTokenAddress.trim())
+      if (toChainId.trim()) url.searchParams.set('toChainId', toChainId.trim())
 
       const res = await fetch(url.toString(), {
         method: 'GET',
@@ -185,6 +193,14 @@ const { getClientForChain } = useSmartWallets();
     underlyingDecimals,
     amount,
     setAmount,
+    fromTokenAddress,
+    setFromTokenAddress,
+    fromChainId,
+    setFromChainId,
+    toTokenAddress,
+    setToTokenAddress,
+    toChainId,
+    setToChainId,
     bytecodes,
     bytecodesLoading,
     bytecodesError,

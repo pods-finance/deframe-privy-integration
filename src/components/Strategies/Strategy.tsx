@@ -19,6 +19,14 @@ const Strategy = ({ strategy, selectedAction, onSelectAction, fetchStrategyDetai
     underlyingDecimals,
     amount,
     setAmount,
+    fromTokenAddress,
+    setFromTokenAddress,
+    fromChainId,
+    setFromChainId,
+    toTokenAddress,
+    setToTokenAddress,
+    toChainId,
+    setToChainId,
     bytecodesLoading,
     bytecodesError,
     fetchBytecodes,
@@ -131,6 +139,70 @@ const Strategy = ({ strategy, selectedAction, onSelectAction, fetchStrategyDetai
             className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm text-slate-100 placeholder:text-slate-500"
             inputMode="decimal"
           />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-400" htmlFor={`fromToken-${strategy.id}`}>
+              From Token Address
+            </label>
+            <input
+              id={`fromToken-${strategy.id}`}
+              value={fromTokenAddress}
+              onChange={(e) => {
+                setFromTokenAddress(e.currentTarget.value)
+              }}
+              placeholder="0x..."
+              className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm font-mono text-slate-100 placeholder:text-slate-500"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-400" htmlFor={`fromChainId-${strategy.id}`}>
+              From Chain ID
+            </label>
+            <input
+              id={`fromChainId-${strategy.id}`}
+              value={fromChainId}
+              onChange={(e) => {
+                setFromChainId(e.currentTarget.value)
+              }}
+              placeholder="e.g. 8453"
+              className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm text-slate-100 placeholder:text-slate-500"
+              inputMode="numeric"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-400" htmlFor={`toToken-${strategy.id}`}>
+              To Token Address
+            </label>
+            <input
+              id={`toToken-${strategy.id}`}
+              value={toTokenAddress}
+              onChange={(e) => {
+                setToTokenAddress(e.currentTarget.value)
+              }}
+              placeholder="0x..."
+              className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm font-mono text-slate-100 placeholder:text-slate-500"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-400" htmlFor={`toChainId-${strategy.id}`}>
+              To Chain ID
+            </label>
+            <input
+              id={`toChainId-${strategy.id}`}
+              value={toChainId}
+              onChange={(e) => {
+                setToChainId(e.currentTarget.value)
+              }}
+              placeholder="e.g. 1"
+              className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm text-slate-100 placeholder:text-slate-500"
+              inputMode="numeric"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
           {bytecodesError && <p className="text-xs text-red-300">{bytecodesError}</p>}
           <button
             type="button"

@@ -1,11 +1,18 @@
+import type { WalletEnvironment } from '../Wallets/useWallets'
 import { useStrategies } from './useStrategies'
 import Strategy from './Strategy'
 
 interface Props {
     walletAddress?: string
+    walletEnvironment?: WalletEnvironment
+    selectedEvmChainId?: number
 }
 
-const Strategies = ({ walletAddress }: Props) => {
+const Strategies = ({
+    walletAddress,
+    walletEnvironment = 'EVM',
+    selectedEvmChainId,
+}: Props) => {
     const {
         strategies,
         loading,
@@ -13,7 +20,7 @@ const Strategies = ({ walletAddress }: Props) => {
         selectedActionById,
         setSelectedActionById,
         fetchStrategyDetails,
-    } = useStrategies(walletAddress)
+    } = useStrategies(walletAddress, walletEnvironment, selectedEvmChainId)
 
     return (
         <div className="flex flex-col gap-3">
@@ -43,6 +50,7 @@ const Strategies = ({ walletAddress }: Props) => {
                             }}
                             walletAddress={walletAddress ?? ''}
                             fetchStrategyDetails={fetchStrategyDetails}
+                            walletEnvironment={walletEnvironment}
                         />
                     )
                 })}

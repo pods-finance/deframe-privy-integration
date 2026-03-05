@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Strategy as StrategyModel } from './useStrategies'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
+import { useSignAndSendTransaction, useWallets } from '@privy-io/react-auth/solana'
+import type { WalletEnvironment } from '../Wallets/useWallets'
+import {
+  type DeframeBytecodeResponse,
+  executeStrategyTx,
+} from './executeStrategyTx'
+import type { Strategy as StrategyModel } from './useStrategies'
 
 interface Params {
   strategy: StrategyModel
   selectedAction: string
   walletAddress: string
   fetchStrategyDetails: (strategyId: string, wallet: string) => Promise<unknown>
+  walletEnvironment?: WalletEnvironment
 }
 
 interface DeframeTokenAmount {
@@ -50,27 +57,23 @@ interface DeframeStrategyDetailsResponse {
   strategy: StrategyModel
 }
 
-interface DeframeBytecodeResponse {
-  feeCharged: string
-  metadata: {
-    isCrossChain: boolean
-    isSameChainSwap: boolean
-    crossChainQuoteId: string
-  }
-  bytecode: {
-    to: string
-    value: string
-    data: string
-    chainId: string
-  }[]
-}
-
-export function useStrategy({ strategy, selectedAction, walletAddress, fetchStrategyDetails }: Params) {
+export function useStrategy({
+  strategy,
+  selectedAction,
+  walletAddress,
+  fetchStrategyDetails,
+  walletEnvironment = 'EVM',
+}: Params) {
   const options = Array.isArray(strategy.availableActions) ? strategy.availableActions : []
   const [details, setDetails] = useState<DeframeStrategyDetailsResponse | null>(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
   const isFetched = useRef(false)
-const { getClientForChain } = useSmartWallets();
+  const smartWallets = useSmartWallets()
+  const signAndSend = useSignAndSendTransaction()
+  const solanaWalletsData = useWallets()
+  const solanaWallets = solanaWalletsData.wallets
+  const solanaWallet =
+    solanaWallets.find((w) => w.address === walletAddress) ?? solanaWallets[0]
 
   const [amount, setAmount] = useState('')
   const [fromTokenAddress, setFromTokenAddress] = useState('')
@@ -159,26 +162,31 @@ const { getClientForChain } = useSmartWallets();
 
       const bytecodeResponse = (await res.json()) as DeframeBytecodeResponse
       setBytecodes(bytecodeResponse)
-      const chainClient = await getClientForChain({
-          id: Number(bytecodeResponse.bytecode[0].chainId)
-      });
-      if (!chainClient) {
-        throw new Error('Chain client not found')
-      }
-      const calls = bytecodeResponse.bytecode.map((b) => {
-        return {
-          to: b.to as `0x${string}`,
-          data: b.data as `0x${string}`,
-          value: BigInt(b.value),
-        }
-      })
 
-      const tx = await chainClient.sendTransaction({
-        calls,
-      })
-      console.log({tx})
-    } catch (e) {
-      setBytecodesError(e instanceof Error ? e.message : 'Unknown error')
+      const tx = await executeStrategyTx(
+        bytecodeResponse,
+        walletEnvironment,
+        {
+          getClientForChain: (params) =>
+            smartWallets.getClientForChain(params),
+        },
+        {
+          signAndSendTransaction: (input) => {
+            const wallet = input.wallet as Parameters<typeof signAndSend.signAndSendTransaction>[0]['wallet']
+            return signAndSend.signAndSendTransaction({
+              transaction: input.transaction,
+              wallet,
+              chain: input.chain ?? 'solana:mainnet',
+              options: input.options ?? { skipPreflight: true },
+            })
+          },
+          solanaWallet,
+        } as import('./executeStrategyTx').SolanaExecutorDeps
+      )
+      console.log({ tx })
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Unknown error'
+      setBytecodesError(message)
     } finally {
       setBytecodesLoading(false)
     }

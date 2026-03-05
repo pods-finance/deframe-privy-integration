@@ -3,9 +3,29 @@ import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { useState } from 'react';
 import Auth from '../Auth';
 import Wallets from '../Wallets';
+import { WalletProvider } from '../Wallets/WalletContext';
+import { useWalletContext } from '../Wallets/useWalletContext';
 import Strategies from '../Strategies';
 import Transfer from '../Transfer/Transfer';
 import EarnWidgetHost from '../EarnWidgetHost';
+
+function AppTabContent() {
+    const ctx = useWalletContext()
+    const walletAddress: string | undefined = ctx.activeWalletAddress ?? undefined
+    const walletEnvironment = ctx.walletEnvironment
+    const selectedEvmChainId =
+        walletEnvironment === 'EVM' ? ctx.selectedEvmChainId : undefined
+    return (
+        <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+            <Wallets />
+            <Strategies
+                walletAddress={walletAddress}
+                walletEnvironment={walletEnvironment}
+                selectedEvmChainId={selectedEvmChainId}
+            />
+        </div>
+    )
+}
 
 const YourApp = () => {
     const { ready, authenticated, user, logout } = usePrivy();
@@ -30,11 +50,10 @@ const YourApp = () => {
                             onClick={() => {
                                 setActiveTab('app');
                             }}
-                            className={`rounded-lg px-3 py-1 text-sm font-medium ${
-                                activeTab === 'app'
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'border border-slate-800 text-slate-300 hover:text-slate-100'
-                            }`}
+                            className={`rounded-lg px-3 py-1 text-sm font-medium ${activeTab === 'app'
+                                ? 'bg-indigo-600 text-white'
+                                : 'border border-slate-800 text-slate-300 hover:text-slate-100'
+                                }`}
                         >
                             Your app
                         </button>
@@ -43,11 +62,10 @@ const YourApp = () => {
                             onClick={() => {
                                 setActiveTab('transfer');
                             }}
-                            className={`rounded-lg px-3 py-1 text-sm font-medium ${
-                                activeTab === 'transfer'
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'border border-slate-800 text-slate-300 hover:text-slate-100'
-                            }`}
+                            className={`rounded-lg px-3 py-1 text-sm font-medium ${activeTab === 'transfer'
+                                ? 'bg-indigo-600 text-white'
+                                : 'border border-slate-800 text-slate-300 hover:text-slate-100'
+                                }`}
                         >
                             Transfer
                         </button>
@@ -56,11 +74,10 @@ const YourApp = () => {
                             onClick={() => {
                                 setActiveTab('deframe');
                             }}
-                            className={`rounded-lg px-3 py-1 text-sm font-medium ${
-                                activeTab === 'deframe'
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'border border-slate-800 text-slate-300 hover:text-slate-100'
-                            }`}
+                            className={`rounded-lg px-3 py-1 text-sm font-medium ${activeTab === 'deframe'
+                                ? 'bg-indigo-600 text-white'
+                                : 'border border-slate-800 text-slate-300 hover:text-slate-100'
+                                }`}
                         >
                             Deframe SDK
                         </button>
@@ -74,10 +91,9 @@ const YourApp = () => {
                 </div>
 
                 {activeTab === 'app' ? (
-                    <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
-                        <Wallets />
-                        <Strategies walletAddress={client?.account.address} />
-                    </div>
+                    <WalletProvider>
+                        <AppTabContent />
+                    </WalletProvider>
                 ) : activeTab === 'transfer' ? (
                     <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
                         <Wallets />

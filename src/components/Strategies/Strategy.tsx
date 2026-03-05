@@ -1,3 +1,4 @@
+import type { WalletEnvironment } from '../Wallets/useWallets'
 import type { Strategy as StrategyModel } from './useStrategies'
 import { useStrategy } from './useStrategy'
 
@@ -7,9 +8,17 @@ interface Props {
   onSelectAction: (action: string) => void
   fetchStrategyDetails: (strategyId: string, wallet: string) => Promise<unknown>
   walletAddress: string
+  walletEnvironment?: WalletEnvironment
 }
 
-const Strategy = ({ strategy, selectedAction, onSelectAction, fetchStrategyDetails, walletAddress }: Props) => {
+const Strategy = ({
+  strategy,
+  selectedAction,
+  onSelectAction,
+  fetchStrategyDetails,
+  walletAddress,
+  walletEnvironment = 'EVM',
+}: Props) => {
   const {
     options,
     details,
@@ -35,6 +44,7 @@ const Strategy = ({ strategy, selectedAction, onSelectAction, fetchStrategyDetai
     selectedAction,
     walletAddress,
     fetchStrategyDetails,
+    walletEnvironment,
   })
 
   const currentPositionValue = details?.spotPosition.currentPosition.value ?? '—'

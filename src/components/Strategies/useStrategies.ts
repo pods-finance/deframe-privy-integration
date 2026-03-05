@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export interface Strategy {
   id: string
@@ -8,13 +8,51 @@ export interface Strategy {
   logourl?: string
   paused?: boolean
   network?: string
+  chain?: string
+  chainId?: number | string
   underlyingAsset?: string
   underlyingDecimals?: number
   assetDecimals?: number
   [key: string]: unknown
 }
 
-export function useStrategies(walletAddress?: string) {
+function getStrategyChainId(s: Strategy): number | undefined {
+  const cid = s.chainId
+  if (cid === undefined) return undefined
+  return typeof cid === 'number' ? cid : Number(cid)
+}
+
+const CHAIN_ID_TO_NAMES: Record<number, string[]> = {
+  1: ['mainnet', 'ethereum', 'eth'],
+  137: ['polygon', 'matic'],
+  8453: ['base'],
+  42161: ['arbitrum'],
+  10: ['optimism'],
+  43114: ['avalanche'],
+}
+
+function strategyMatchesChainId(s: Strategy, chainId: number): boolean {
+  const sid = getStrategyChainId(s)
+  if (sid !== undefined) return sid === chainId
+  const network = (getStrategyChain(s) ?? '').toLowerCase()
+  const names = CHAIN_ID_TO_NAMES[chainId] ?? []
+  return names.some((n) => network.includes(n))
+}
+
+function getStrategyChain(s: Strategy): string | undefined {
+  return s.chain ?? s.network
+}
+
+function isSolanaStrategy(s: Strategy): boolean {
+  const chain = getStrategyChain(s)?.toLowerCase()
+  return chain === 'solana'
+}
+
+export function useStrategies(
+  walletAddress?: string,
+  walletEnvironment: 'EVM' | 'SVM' = 'EVM',
+  selectedEvmChainId?: number
+) {
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -126,19 +164,32 @@ export function useStrategies(walletAddress?: string) {
       })
     }
   }
+  const filteredStrategies = useMemo(() => {
+    if (walletEnvironment === 'EVM') {
+      const evmStrategies = strategies.filter((s) => !isSolanaStrategy(s))
+      if (selectedEvmChainId !== undefined) {
+        return evmStrategies.filter((s) =>
+          strategyMatchesChainId(s, selectedEvmChainId)
+        )
+      }
+      return evmStrategies
+    }
+    return strategies.filter((s) => isSolanaStrategy(s))
+  }, [strategies, walletEnvironment, selectedEvmChainId])
+
   useEffect(() => {
     if (!walletAddress) return
-    const firstId = strategies[0]?.id
+    const firstId = filteredStrategies[0]?.id
     if (!firstId) return
     if (detailsById[firstId]) return
     if (detailsLoadingById[firstId]) return
 
     void fetchStrategyDetails(firstId, walletAddress)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [walletAddress, strategies])
+  }, [walletAddress, filteredStrategies])
 
   return {
-    strategies,
+    strategies: filteredStrategies,
     loading,
     error,
     selectedActionById,

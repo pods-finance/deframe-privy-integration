@@ -6,6 +6,7 @@ import Wallets from '../Wallets';
 import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
 import Strategies from '../Strategies';
+import Swap from '../Swap';
 import Transfer from '../Transfer/Transfer';
 import EarnWidgetHost from '../EarnWidgetHost';
 
@@ -30,7 +31,7 @@ function AppTabContent() {
 const YourApp = () => {
     const { ready, authenticated, user, logout } = usePrivy();
     const { client } = useSmartWallets();
-    const [activeTab, setActiveTab] = useState<'app' | 'transfer' | 'deframe'>('app');
+    const [activeTab, setActiveTab] = useState<'app' | 'transfer' | 'swap' | 'deframe'>('app');
     if (!ready) {
         return <div>Loading...</div>;
     }
@@ -72,6 +73,18 @@ const YourApp = () => {
                         <button
                             type="button"
                             onClick={() => {
+                                setActiveTab('swap');
+                            }}
+                            className={`rounded-lg px-3 py-1 text-sm font-medium ${activeTab === 'swap'
+                                ? 'bg-indigo-600 text-white'
+                                : 'border border-slate-800 text-slate-300 hover:text-slate-100'
+                                }`}
+                        >
+                            Swap
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
                                 setActiveTab('deframe');
                             }}
                             className={`rounded-lg px-3 py-1 text-sm font-medium ${activeTab === 'deframe'
@@ -90,18 +103,23 @@ const YourApp = () => {
                     </div>
                 </div>
 
-                {activeTab === 'app' ? (
-                    <WalletProvider>
+                <WalletProvider>
+                    {activeTab === 'app' ? (
                         <AppTabContent />
-                    </WalletProvider>
-                ) : activeTab === 'transfer' ? (
-                    <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
-                        <Wallets />
-                        <Transfer walletAddress={client?.account.address} />
-                    </div>
-                ) : (
-                    <EarnWidgetHost />
-                )}
+                    ) : activeTab === 'transfer' ? (
+                        <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+                            <Wallets />
+                            <Transfer walletAddress={client?.account.address} />
+                        </div>
+                    ) : activeTab === 'swap' ? (
+                        <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+                            <Wallets />
+                            <Swap walletAddress={client?.account.address} />
+                        </div>
+                    ) : (
+                        <EarnWidgetHost />
+                    )}
+                </WalletProvider>
             </div>
         </div>
     );

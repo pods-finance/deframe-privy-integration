@@ -7,6 +7,7 @@ import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
 import Strategies from '../Strategies';
 import Swap from '../Swap';
+import TokenBalances from '../TokenBalances';
 import Transfer from '../Transfer/Transfer';
 import EarnWidgetHost from '../EarnWidgetHost';
 
@@ -17,7 +18,7 @@ function AppTabContent() {
     const selectedEvmChainId =
         walletEnvironment === 'EVM' ? ctx.selectedEvmChainId : undefined
     return (
-        <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+        <div className="flex w-full flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
             <Wallets />
             <Strategies
                 walletAddress={walletAddress}
@@ -42,7 +43,7 @@ const YourApp = () => {
 
     return (
         <div className="min-h-screen w-full bg-slate-950 px-4 py-10 text-slate-100">
-            <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
                 <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-lg backdrop-blur">
                     <p>Hello {user?.email?.address ?? 'User'}</p>
                     <div className="flex items-center gap-2">
@@ -104,21 +105,32 @@ const YourApp = () => {
                 </div>
 
                 <WalletProvider>
-                    {activeTab === 'app' ? (
-                        <AppTabContent />
-                    ) : activeTab === 'transfer' ? (
-                        <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
-                            <Wallets />
-                            <Transfer walletAddress={client?.account.address} />
+                    <div className="flex w-full gap-6">
+                        <div className="flex shrink-0 flex-col w-md">
+                            {activeTab === 'app' ? (
+                                <AppTabContent />
+                            ) : activeTab === 'transfer' ? (
+                                <div className="flex flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+                                    <Wallets />
+                                    <Transfer walletAddress={client?.account.address} />
+                                </div>
+                            ) : activeTab === 'swap' ? (
+                                <div className="flex flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+                                    <Wallets />
+                                    <Swap walletAddress={client?.account.address} />
+                                </div>
+                            ) : (
+                                <div>
+                                    <EarnWidgetHost />
+                                </div>
+                            )}
                         </div>
-                    ) : activeTab === 'swap' ? (
-                        <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
-                            <Wallets />
-                            <Swap walletAddress={client?.account.address} />
-                        </div>
-                    ) : (
-                        <EarnWidgetHost />
-                    )}
+                        {(activeTab === 'app' || activeTab === 'transfer' || activeTab === 'swap') && (
+                            <div className="min-w-0 flex-1">
+                                <TokenBalances walletAddress={client?.account.address} />
+                            </div>
+                        )}
+                    </div>
                 </WalletProvider>
             </div>
         </div>

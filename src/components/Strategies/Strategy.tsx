@@ -36,6 +36,8 @@ const Strategy = ({
     setToTokenAddress,
     toChainId,
     setToChainId,
+    reserveAddress,
+    setReserveAddress,
     bytecodesLoading,
     bytecodesError,
     fetchBytecodes,
@@ -211,6 +213,23 @@ const Strategy = ({
             />
           </div>
         </div>
+
+        {strategy.network?.toLowerCase() === 'solana' && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-400" htmlFor={`reserveAddress-${strategy.id}`}>
+              Reserve Address (SVM)
+            </label>
+            <input
+              id={`reserveAddress-${strategy.id}`}
+              value={reserveAddress}
+              onChange={(e) => {
+                setReserveAddress(e.currentTarget.value)
+              }}
+              placeholder="SVM reserve address"
+              className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm font-mono text-slate-100 placeholder:text-slate-500"
+            />
+          </div>
+        )}
 
         <div className="flex flex-col gap-1">
           {bytecodesError && <p className="text-xs text-red-300">{bytecodesError}</p>}

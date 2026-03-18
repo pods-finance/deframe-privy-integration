@@ -80,6 +80,7 @@ export function useStrategy({
   const [fromChainId, setFromChainId] = useState('')
   const [toTokenAddress, setToTokenAddress] = useState('')
   const [toChainId, setToChainId] = useState('')
+  const [reserveAddress, setReserveAddress] = useState('')
   const [bytecodes, setBytecodes] = useState<DeframeBytecodeResponse | null>(null)
   const [bytecodesLoading, setBytecodesLoading] = useState(false)
   const [bytecodesError, setBytecodesError] = useState<string | null>(null)
@@ -103,10 +104,8 @@ export function useStrategy({
     void refreshDetails()
   }, [refreshDetails, walletAddress])
 
-  let avgApy: number | null = null
-  if (details) {
-    avgApy = typeof details.spotPosition.avgApy === 'number' ? details.spotPosition.avgApy : null
-  }
+  const avgApy =
+    typeof strategy.avgApy === 'number' ? strategy.avgApy : null
   const avgApyPct = avgApy === null ? null : avgApy * 100
 
   const underlyingDecimals =
@@ -137,6 +136,17 @@ export function useStrategy({
         throw new Error('Enter an amount')
       }
 
+      const trimmedReserveAddress = reserveAddress.trim()
+      if (walletEnvironment === 'SVM' && selectedAction === 'borrow') {
+        if (!trimmedReserveAddress) {
+          throw new Error('Enter a reserve address')
+        }
+        const svmAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
+        if (!svmAddressRegex.test(trimmedReserveAddress)) {
+          throw new Error('Invalid SVM reserve address')
+        }
+      }
+
       const url = new URL(`/strategies/${encodeURIComponent(strategy.id)}/bytecode`, baseUrl)
       url.searchParams.set('action', selectedAction)
       url.searchParams.set('wallet', walletAddress)
@@ -145,6 +155,7 @@ export function useStrategy({
       if (fromChainId.trim()) url.searchParams.set('fromChainId', fromChainId.trim())
       if (toTokenAddress.trim()) url.searchParams.set('toTokenAddress', toTokenAddress.trim())
       if (toChainId.trim()) url.searchParams.set('toChainId', toChainId.trim())
+      if (reserveAddress.trim()) url.searchParams.set('reserveAddress', reserveAddress.trim())
 
       const res = await fetch(url.toString(), {
         method: 'GET',
@@ -209,6 +220,8 @@ export function useStrategy({
     setToTokenAddress,
     toChainId,
     setToChainId,
+    reserveAddress,
+    setReserveAddress,
     bytecodes,
     bytecodesLoading,
     bytecodesError,

@@ -1039,38 +1039,45 @@
   dependencies:
     lit "^3"
 
-"@privy-io/api-base@1.8.1":
-  version "1.8.1"
-  resolved "https://registry.yarnpkg.com/@privy-io/api-base/-/api-base-1.8.1.tgz#66040896ac8f10e25e45a45af4eb448707fa17bd"
-  integrity sha512-Kt9/64l6p6xw+EX29VF3nAYUgKpLMLqpBhMQSZap4A3HqAqcKap7CGL+IQfJkVNrjmpuYL455qdDSIqNaUjUyQ==
+"@privy-io/api-base@1.8.2":
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/@privy-io/api-base/-/api-base-1.8.2.tgz#87651b150caa3e62ec3ded4bee87b489e59f7430"
+  integrity sha512-pEvZ73GnC2OB/w35MGCPhqZ8mnApXgUpXxM0t9qZmNzvDNoMKBLPgysUXouAx7E4jO8REJPuwX70Y1AqJ/51kg==
   dependencies:
     zod "^3.24.3"
 
-"@privy-io/api-types@0.3.4":
-  version "0.3.4"
-  resolved "https://registry.yarnpkg.com/@privy-io/api-types/-/api-types-0.3.4.tgz#aa9ea861996a39dd2e0e2e1b2a20049fc26eefa7"
-  integrity sha512-OWAMriGX/RygQ74vZZDRFns4wFz5/TxvqXFLtEqQVuwTvXjzo6YkrhKR2qbQADnGkU3SXLHEa3Q7iNfoUKuJ+w==
+"@privy-io/api-types@0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@privy-io/api-types/-/api-types-0.6.1.tgz#3ba771837ebc17444b4969265a2a793f10ec5148"
+  integrity sha512-ICVjfXITqPiDrFZMjE0dNHzElvnKqxjxpQCbh+kjEij/kzleaAAjClLSD56S3x96jAsf8fUnmFBqS4E2s3eiyA==
 
-"@privy-io/chains@0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@privy-io/chains/-/chains-0.0.6.tgz#44b28f06229c00fc5cae4acceb0c6e1732ec20a4"
-  integrity sha512-tcDYv2r4HJBQkEzGS3hau01WmZ4zLmEgaitPUorKvW4IC6qOzxcIXJIqeX6HT6JJjoV8I6xNey0pCsF+VS59ew==
-
-"@privy-io/ethereum@0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@privy-io/ethereum/-/ethereum-0.0.6.tgz#ccc8b00ccd28e410d234b4b6744c1d2261fae805"
-  integrity sha512-roMGsHuCeCQk1gumVOv4N/vKNVb26E+y9WLhhE7Ww2jji9Zku7dgRyHWQYda8Qy9sEB4q4+kGdk7Z5NWFGGMMA==
-
-"@privy-io/js-sdk-core@0.58.7":
-  version "0.58.7"
-  resolved "https://registry.yarnpkg.com/@privy-io/js-sdk-core/-/js-sdk-core-0.58.7.tgz#e7ee6562364d985a8ccbda2da61bd9267c7fce3a"
-  integrity sha512-R9aQ40hOYigSVAZNUVJxJdrN8xRZCUaTJMuyvVvwY6NBX0Kf7R9x34Bd99/mUTWBGXRGkePwfRkmKR1dk1jIlQ==
+"@privy-io/are-addresses-equal@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@privy-io/are-addresses-equal/-/are-addresses-equal-0.0.1.tgz#babf3c606371ec78f52e3acbc367541846c52f1b"
+  integrity sha512-iygs3VfFtB0RvX0HRGzJB//sm8V1j+qMvCxntIpTHEJRcUewbTAlYgTiOa2xx/dcV+Y6OML0C8STKpMqKG122w==
   dependencies:
-    "@privy-io/api-base" "1.8.1"
-    "@privy-io/api-types" "0.3.4"
-    "@privy-io/chains" "0.0.6"
-    "@privy-io/ethereum" "0.0.6"
-    "@privy-io/routes" "0.0.5"
+    viem "^2.46.1"
+
+"@privy-io/chains@0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@privy-io/chains/-/chains-0.1.2.tgz#4b909ba866ea06df287eb840615d76b7e6ad8cfb"
+  integrity sha512-h5+1j6t5BEl2t2nZUuY+iOfLox1w+DhdFTld+m09mOQCkFvJRP6Zd/2hgqY7BY95waymREzz5sx1jy9QWb5/nA==
+
+"@privy-io/ethereum@0.0.8":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@privy-io/ethereum/-/ethereum-0.0.8.tgz#0e86b08ac4f07b4cd0a15e590b9b28bd8d7411f1"
+  integrity sha512-8Mgy5TdvDxb6IqHejnkGfZ6GTXicWTjtbaI4WNF9qlnwggRa+JnLr4jFaL6QTcZllt+Cr/0gnHDf3bRVtgoiaw==
+
+"@privy-io/js-sdk-core@0.60.5":
+  version "0.60.5"
+  resolved "https://registry.yarnpkg.com/@privy-io/js-sdk-core/-/js-sdk-core-0.60.5.tgz#aa30725330809e440f7cddef1e034e3150d47999"
+  integrity sha512-bmedauD07qKr7lC5QQ36u8YWcY5BqHVZJVM1tZXfoMujTEwdKz9FckZmr+1/4C0m/e0vDlBPfN0aRwXLDcC5uA==
+  dependencies:
+    "@privy-io/api-base" "1.8.2"
+    "@privy-io/api-types" "0.6.1"
+    "@privy-io/chains" "0.1.2"
+    "@privy-io/ethereum" "0.0.8"
+    "@privy-io/routes" "0.0.8"
     canonicalize "^2.0.0"
     eventemitter3 "^5.0.1"
     fetch-retry "^6.0.0"
@@ -1085,10 +1092,10 @@
   resolved "https://registry.yarnpkg.com/@privy-io/popup/-/popup-0.0.2.tgz#f5f6e83bdf9bf4b06a149d54e726de4b1120d5eb"
   integrity sha512-kkxzZ5TFseqnZRDVhBR1Si9mTHc1jW+hLSbYviauK80enJOGsOGmxeeC/U0t0kLZGLpn0Jj5v5lNS2bmQ4as/Q==
 
-"@privy-io/react-auth@^3.11.0":
-  version "3.11.0"
-  resolved "https://registry.yarnpkg.com/@privy-io/react-auth/-/react-auth-3.11.0.tgz#7fd437ae0ea2a24b132f59af14c964cfeb8bd0f6"
-  integrity sha512-0FrfQo14cQlAxi/zBvMa6Nd4f/lcOyObqEfxGPwPcazbQe0HIWO+amFlbsPSLM3WmjREICJ2m7OsoX+m/SYB0Q==
+"@privy-io/react-auth@^3.17.0":
+  version "3.17.0"
+  resolved "https://registry.yarnpkg.com/@privy-io/react-auth/-/react-auth-3.17.0.tgz#93cc4c65f25ca5147329702ac2233bb6fbbabd07"
+  integrity sha512-KhMm0J5PUldsGFVcAr0RiX08X4MXPpwDjhk3x/oG9r35JD5TKS9Ojt01GU1TRp0WGiVGWI5/yMPI5uHNOjKL0w==
   dependencies:
     "@base-org/account" "^1.1.0"
     "@coinbase/wallet-sdk" "4.3.2"
@@ -1097,13 +1104,14 @@
     "@headlessui/react" "^2.2.0"
     "@heroicons/react" "^2.1.1"
     "@marsidev/react-turnstile" "^1.3.1"
-    "@privy-io/api-base" "1.8.1"
-    "@privy-io/api-types" "0.3.4"
-    "@privy-io/chains" "0.0.6"
-    "@privy-io/ethereum" "0.0.6"
-    "@privy-io/js-sdk-core" "0.58.7"
+    "@privy-io/api-base" "1.8.2"
+    "@privy-io/api-types" "0.6.1"
+    "@privy-io/are-addresses-equal" "0.0.1"
+    "@privy-io/chains" "0.1.2"
+    "@privy-io/ethereum" "0.0.8"
+    "@privy-io/js-sdk-core" "0.60.5"
     "@privy-io/popup" "0.0.2"
-    "@privy-io/routes" "0.0.5"
+    "@privy-io/routes" "0.0.8"
     "@privy-io/urls" "0.0.3"
     "@scure/base" "^1.2.5"
     "@simplewebauthn/browser" "^13.2.2"
@@ -1126,16 +1134,16 @@
     stylis "^4.3.4"
     tinycolor2 "^1.6.0"
     uuid ">=8 <10"
-    viem "^2.43.1"
+    viem "^2.46.1"
     x402 "^0.7.1"
     zustand "^5.0.0"
 
-"@privy-io/routes@0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@privy-io/routes/-/routes-0.0.5.tgz#f2670c83097466ce53f8d2c21647b3a53068d0f7"
-  integrity sha512-aF/wQnm83FS8NDh4MnFh5ABQPL7oI/OCIoFR9WbaIHILZgjKBSo9UaoGdIprwJI+aEYC1Img+3H5Fn3vlBFPIA==
+"@privy-io/routes@0.0.8":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@privy-io/routes/-/routes-0.0.8.tgz#711977fdd5ae9d621868cd8d6cc459367d1915fe"
+  integrity sha512-RrEDFZ3E50QNO5bylPgWvqQD0UdHic1Xs7KZ60LVpB1nKGcBxjmMqV+4K3dACC1Jz/pSM1/ZjzLVsgCId0lqsg==
   dependencies:
-    "@privy-io/api-types" "0.3.4"
+    "@privy-io/api-types" "0.6.1"
 
 "@privy-io/urls@0.0.3":
   version "0.0.3"
@@ -5988,6 +5996,20 @@ ox@0.11.3:
     abitype "^1.2.3"
     eventemitter3 "5.0.1"
 
+ox@0.14.5:
+  version "0.14.5"
+  resolved "https://registry.yarnpkg.com/ox/-/ox-0.14.5.tgz#b5b630d0f7e8f6c2ea485ca9db103bc126afa30e"
+  integrity sha512-HgmHmBveYO40H/R3K6TMrwYtHsx/u6TAB+GpZlgJCoW0Sq5Ttpjih0IZZiwGQw7T6vdW4IAyobYrE2mdAvyF8Q==
+  dependencies:
+    "@adraffy/ens-normalize" "^1.11.0"
+    "@noble/ciphers" "^1.3.0"
+    "@noble/curves" "1.9.1"
+    "@noble/hashes" "^1.8.0"
+    "@scure/bip32" "^1.7.0"
+    "@scure/bip39" "^1.6.0"
+    abitype "^1.2.3"
+    eventemitter3 "5.0.1"
+
 ox@0.6.7:
   version "0.6.7"
   resolved "https://registry.yarnpkg.com/ox/-/ox-0.6.7.tgz#afd53f2ecef68b8526660e9d29dee6e6b599a832"
@@ -7310,7 +7332,7 @@ viem@2.36.0:
     ox "0.9.1"
     ws "8.18.3"
 
-viem@>=2.29.0, viem@>=2.37.9, viem@^2.1.1, viem@^2.21.26, viem@^2.27.2, viem@^2.31.7, viem@^2.43.1, viem@^2.44.4:
+viem@>=2.29.0, viem@>=2.37.9, viem@^2.1.1, viem@^2.21.26, viem@^2.27.2, viem@^2.31.7, viem@^2.44.4:
   version "2.44.4"
   resolved "https://registry.yarnpkg.com/viem/-/viem-2.44.4.tgz#f749f038f9bd5a93b959319a35a1554803a09c2e"
   integrity sha512-sJDLVl2EsS5Fo7GSWZME5CXEV7QRYkUJPeBw7ac+4XI3D4ydvMw/gjulTsT5pgqcpu70BploFnOAC6DLpan1Yg==
@@ -7322,6 +7344,20 @@ viem@>=2.29.0, viem@>=2.37.9, viem@^2.1.1, viem@^2.21.26, viem@^2.27.2, viem@^2.
     abitype "1.2.3"
     isows "1.0.7"
     ox "0.11.3"
+    ws "8.18.3"
+
+viem@^2.46.1:
+  version "2.47.4"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-2.47.4.tgz#e892858ec9764dd909ee75858e419f2086cda166"
+  integrity sha512-h0Wp/SYmJO/HB4B/em1OZ3W1LaKrmr7jzaN7talSlZpo0LCn0V6rZ5g923j6sf4VUSrqp/gUuWuHFc7UcoIp8A==
+  dependencies:
+    "@noble/curves" "1.9.1"
+    "@noble/hashes" "1.8.0"
+    "@scure/bip32" "1.7.0"
+    "@scure/bip39" "1.6.0"
+    abitype "1.2.3"
+    isows "1.0.7"
+    ox "0.14.5"
     ws "8.18.3"
 
 vite-plugin-node-polyfills@^0.25.0:

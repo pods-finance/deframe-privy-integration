@@ -7,7 +7,7 @@ import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
 import Strategies from '../Strategies';
 import Swap from '../Swap';
-import TokenBalances from '../TokenBalances';
+// import TokenBalances from '../TokenBalances';
 import Transfer from '../Transfer/Transfer';
 import EarnWidgetHost from '../EarnWidgetHost';
 
@@ -125,11 +125,11 @@ const YourApp = () => {
                                 </div>
                             )}
                         </div>
-                        {(activeTab === 'app' || activeTab === 'transfer' || activeTab === 'swap') && (
+                        {/* {(activeTab === 'app' || activeTab === 'transfer' || activeTab === 'swap') && (
                             <div className="min-w-0 flex-1">
                                 <TokenBalances walletAddress={client?.account.address} />
                             </div>
-                        )}
+                        )} */}
                     </div>
                 </WalletProvider>
             </div>

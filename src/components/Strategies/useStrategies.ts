@@ -13,6 +13,12 @@ export interface Strategy {
   underlyingAsset?: string
   underlyingDecimals?: number
   assetDecimals?: number
+  /** From list endpoint (decimal, e.g. 0.05 = 5%) */
+  apy?: number
+  /** From list endpoint (decimal, e.g. 0.05 = 5%) */
+  avgApy?: number
+  /** From list endpoint (decimal, e.g. 0.05 = 5%) */
+  inceptionApy?: number
   [key: string]: unknown
 }
 
@@ -93,9 +99,11 @@ export function useStrategies(
         }
 
         const data = (await res.json()) as unknown
-        const list = Array.isArray((data as { data?: unknown }).data)
-          ? ((data as { data: Strategy[] }).data)
-          : []
+        const list: Strategy[] = Array.isArray(data)
+          ? (data as Strategy[])
+          : Array.isArray((data as { data?: unknown }).data)
+            ? ((data as { data: Strategy[] }).data)
+            : []
 
         setStrategies(list)
       } catch (e) {

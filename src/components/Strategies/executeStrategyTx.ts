@@ -19,8 +19,6 @@ export interface DeframeBytecodeResponse {
   bytecode: DeframeEvmBytecode[]
   /** Solana: base64-encoded serialized transaction (optional) */
   transaction?: string
-  /** Solana: array of base64 transactions (optional) */
-  transactionData?: string[]
 }
 
 export type WalletEnvironment = 'EVM' | 'SVM'
@@ -51,11 +49,7 @@ function normalizeBase64(str: string): string {
 function extractSolanaTransaction(
   resp: DeframeBytecodeResponse
 ): Uint8Array | null {
-  const raw =
-    resp.transaction ??
-    resp.transactionData?.[0] ??
-    (resp.bytecode[0] as { transaction?: string } | undefined)?.transaction ??
-    (resp.bytecode[0] as { data?: string } | undefined)?.data
+  const raw = resp.transaction
 
   if (!raw || typeof raw !== 'string') return null
 

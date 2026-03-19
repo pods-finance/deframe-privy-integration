@@ -31,6 +31,7 @@ function getStrategyChainId(s: Strategy): number | undefined {
 const CHAIN_ID_TO_NAMES: Record<number, string[]> = {
   1: ['mainnet', 'ethereum', 'eth'],
   137: ['polygon', 'matic'],
+  56: ['bsc'],
   8453: ['base'],
   42161: ['arbitrum'],
   10: ['optimism'],

@@ -16,6 +16,7 @@ import { buildTokensFromStrategies } from './tokensByChain'
 const CHAIN_ID_TO_CHAIN = {
   1: mainnet,
   137: polygon,
+  56: bsc,
   8453: base,
   42161: arbitrum,
   10: optimism,
@@ -27,6 +28,7 @@ const CHAIN_ID_TO_CHAIN = {
 const CHAIN_NAMES: Record<number, string> = {
   1: 'Ethereum',
   137: 'Polygon',
+  56: 'BSC',
   8453: 'Base',
   42161: 'Arbitrum',
   10: 'Optimism',
@@ -38,6 +40,7 @@ const CHAIN_NAMES: Record<number, string> = {
 const CHAIN_ID_TO_RPC_KEY: Record<number, string> = {
   1: 'https://eth-mainnet.g.alchemy.com/v2',
   137: 'https://polygon-mainnet.g.alchemy.com/v2',
+  56: 'https://bsc-mainnet.g.alchemy.com/v2',
   8453: 'https://base-mainnet.g.alchemy.com/v2',
   42161: 'https://arb-mainnet.g.alchemy.com/v2',
   10: 'https://opt-mainnet.g.alchemy.com/v2',

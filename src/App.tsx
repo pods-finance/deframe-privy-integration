@@ -2,7 +2,7 @@ import { PrivyProvider } from '@privy-io/react-auth'
 import { SmartWalletsProvider } from '@privy-io/react-auth/smart-wallets';
 import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
 import YourApp from './components/YourApp';
-import { arbitrum, base, mainnet, optimism, polygon, gnosis, hyperEvm, avalanche } from 'viem/chains';
+import { arbitrum, base, mainnet, optimism, polygon, gnosis, hyperEvm, avalanche, bsc } from 'viem/chains';
 
 function App() {
   const privyAppId = import.meta.env.VITE_APP_PRIVY_APP_ID || ''
@@ -21,7 +21,7 @@ function App() {
           createOnLogin: "users-without-wallets",
         },
       },
-      supportedChains: [arbitrum, base, mainnet, optimism, polygon, gnosis, hyperEvm, avalanche],
+      supportedChains: [arbitrum, base, bsc, mainnet, optimism, polygon, gnosis, hyperEvm, avalanche],
       solana: {
         rpcs: {
           'solana:mainnet': {

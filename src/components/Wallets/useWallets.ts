@@ -3,13 +3,14 @@ import { useCreateWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { useCreateWallet as useCreateSolanaWallet } from '@privy-io/react-auth/solana'
 import { createPublicClient, http } from 'viem'
-import { arbitrum, avalanche, base, gnosis, hyperEvm, mainnet, optimism, polygon } from 'viem/chains'
+import { arbitrum, avalanche, base, bsc, gnosis, hyperEvm, mainnet, optimism, polygon } from 'viem/chains'
 
 export type WalletEnvironment = 'EVM' | 'SVM'
 
 export const EVM_CHAINS = [
     { id: mainnet.id, name: 'Mainnet', chain: mainnet },
     { id: polygon.id, name: 'Polygon', chain: polygon },
+    { id: bsc.id, name: 'BSC', chain: bsc },
     { id: base.id, name: 'Base', chain: base },
     { id: arbitrum.id, name: 'Arbitrum', chain: arbitrum },
     { id: optimism.id, name: 'Optimism', chain: optimism },

@@ -27,6 +27,7 @@ const NETWORK_NAME_TO_CHAIN_ID: Record<string, number> = {
   ethereum: 1,
   eth: 1,
   polygon: 137,
+  bsc: 56,
   matic: 137,
   base: 8453,
   arbitrum: 42161,

@@ -7,11 +7,11 @@ Enable users to access DeFi yield strategies with a Web2-grade experience by com
 - **Deframe Docs**
   - Official documentation for Deframe strategies.
   - Open docs: `https://docs.deframe.io/`
-- **Privy Solana Walets Docs**
+- **Privy Solana Wallets Docs**
   - Privy Solana Wallets are a powerful tool for helping users interact with DeFi.
   - Open docs: `https://docs.privy.io/wallets/using-wallets/solana`
 
-## Install and configure the Vite projet
+## Install and configure the Vite project
 
 Commands/selections used (as shown in the `create-vite` wizard):
 
@@ -62,19 +62,20 @@ export default defineConfig({
 
 ### Privy's SDK setup
 
-Below is a minimal setup for Privy and Alchemy provider setup. To customize your Privy provider, follow the instructions in the Privy Quickstart to get your app set up with Privy.
+Below is a setup that matches `src/App.tsx` in this repository: **Solana** embedded wallets, and **Helius** for Solana HTTP RPC and WebSocket (`rpcSubscriptions`), which supports `signatureSubscribe` for transaction confirmations.
 
 ```ts
 // src/App.tsx
 import { PrivyProvider } from '@privy-io/react-auth';
+import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
 import YourApp from "your_app_path";
 
 function App() {
-  const privyAppId = import.meta.env.VITE_APP_PRIVY_APP_ID || '';
-  const alchemyApiKey = import.meta.env.VITE_APP_ALCHEMY_API_KEY;
+  const privyAppId = import.meta.env.VITE_APP_PRIVY_APP_ID || ''
+  const heliusApiKey = import.meta.env.VITE_APP_HELIUS_API_KEY || ''
 
   if (!privyAppId) {
-    throw new Error('VITE_APP_PRIVY_APP_ID is not set');
+    throw new Error('VITE_APP_PRIVY_APP_ID is not set')
   }
 
   return (
@@ -83,18 +84,14 @@ function App() {
       config={{
         embeddedWallets: {
           solana: {
-            createOnLogin: "users-without-wallets",
+            createOnLogin: 'users-without-wallets',
           },
         },
         solana: {
           rpcs: {
-            "solana:mainnet": {
-              rpc: createSolanaRpc(
-                `https://solana-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
-              ),
-              rpcSubscriptions: createSolanaRpcSubscriptions(
-                `wss://solana-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
-              ),
+            'solana:mainnet': {
+              rpc: createSolanaRpc(`https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`),
+              rpcSubscriptions: createSolanaRpcSubscriptions(`wss://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`),
             },
           },
         },
@@ -106,7 +103,6 @@ function App() {
 }
 
 export default App
-
 ```
 
 ## Configure secrets
@@ -122,7 +118,7 @@ This application relies on environment variables to connect to Privy and Deframe
    VITE_APP_PRIVY_APP_ID=''
    VITE_APP_DEFRAME_API_URL=''
    VITE_APP_DEFRAME_API_KEY=''
-   VITE_APP_ALCHEMY_API_KEY=''
+   VITE_APP_HELIUS_API_KEY=''
    ```
 
    - `VITE_APP_PRIVY_APP_ID`
@@ -138,9 +134,9 @@ This application relies on environment variables to connect to Privy and Deframe
 
    Both values can be obtained from the Deframe Dashboard:
    <https://www.deframe.io/dashboard>
-   - `VITE_APP_ALCHEMY_API_KEY`
+   - `VITE_APP_HELIUS_API_KEY`
 
-   Your Alchemy application identifier. You can find this value in the Alchemy Dashboard: <https://dashboard.alchemy.com/>
+   Used for Solana **HTTP RPC** and **WebSocket** (`rpcSubscriptions`) in `PrivyProvider` (`solana.rpcs['solana:mainnet']`). The WebSocket endpoint supports `signatureSubscribe` for confirmations. Get a key from the Helius Dashboard: <https://www.helius.dev/>
 
 2. Add TypeScript support for environment variables
 
@@ -153,7 +149,7 @@ This application relies on environment variables to connect to Privy and Deframe
      readonly VITE_APP_PRIVY_APP_ID: string;
      readonly VITE_APP_DEFRAME_API_URL: string;
      readonly VITE_APP_DEFRAME_API_KEY: string;
-     readonly VITE_APP_ALCHEMY_API_KEY: string;
+     readonly VITE_APP_HELIUS_API_KEY: string;
    }
 
    interface ImportMeta {
@@ -171,8 +167,10 @@ This application relies on environment variables to connect to Privy and Deframe
 ### Privy's SDK installation
 
 ```bash
-yarn add @privy-io/react-auth@latest permissionless
+yarn add @privy-io/react-auth@latest permissionless @solana/kit
 ```
+
+(`@solana/kit` is required for `createSolanaRpc` / `createSolanaRpcSubscriptions`.)
 
 ## Authentication (required)
 
@@ -259,11 +257,12 @@ Fetch the available strategies that the user can interact with.
 Example request:
 
 ```js
-const baseUrl = import.meta.env.DEFRAME_API_URL;
-const apiKey = import.meta.env.DEFRAME_API_KEY;
+const baseUrl = import.meta.env.VITE_APP_DEFRAME_API_URL;
+const apiKey = import.meta.env.VITE_APP_DEFRAME_API_KEY;
 
 const url = new URL("/strategies", baseUrl);
 url.searchParams.set("limit", "100");
+// Optional filters
 url.searchParams.set("network", "solana");
 url.searchParams.set("protocol", "kamino");
 
@@ -274,40 +273,35 @@ const res = await fetch(url.toString(), {
   },
 });
 
-const json = await res.json();
-console.log(json);
+const data = await res.json();
+console.log(data);
 ```
 
-Expected response shape (simplified):
+Expected response shape (this repo accepts both):
 
-- `data`: list of strategies
-- `pagination`: paging metadata (when available)
+- A **top-level array** of strategies, or
+- An object with **`data`**: strategy array (and optional **`pagination`**)
 
 Each strategy item commonly includes fields like:
 
-- `id`
-- `protocol`
-- `assetName`
-- `network`
-- `availableActions`
-- `logourl`
+- `id`, `protocol`, `assetName`, `network`, `availableActions`, `logourl`
 - `underlyingDecimals` / `assetDecimals`
+- **`apy`**, **`avgApy`**, **`inceptionApy`** (decimals, e.g. `0.05` = 5%) from the list response — the UI uses **`avgApy`** from the list for the card label
 
 ### 2) Strategy details for a wallet
 
-Fetch specific information for a given strategy, as apy (protocol UI apy), avgApy (last 30 days) and inceptionApy (since contract was deployed). If wallet was passed as query param, the wallet's spot position is returned.
+Fetch historic activity and (when `wallet` is passed) the user’s **spot position**. In this app, **APY metrics shown in the strategy card** come from the **list** endpoint (`apy`, `avgApy`, `inceptionApy` on each strategy), not from this details call.
 
 - **Method**: `GET`
 - **Path**: `/strategies/:strategy-id`
 - **Query params**:
   - `wallet`: the user's wallet address
-  ***
 
 Example request:
 
 ```ts
-const baseUrl = import.meta.env.DEFRAME_API_URL;
-const apiKey = import.meta.env.DEFRAME_API_KEY;
+const baseUrl = import.meta.env.VITE_APP_DEFRAME_API_URL;
+const apiKey = import.meta.env.VITE_APP_DEFRAME_API_KEY;
 
 const strategyId = "Kamino-SOL-solana";
 const wallet = "YOUR_WALLET";
@@ -336,12 +330,13 @@ Request the transaction bytecodes needed to execute a strategy action for a wall
   - `action` (required): one of the strategy `availableActions` (example: `lend`, `withdraw`, `borrow`, `repay`)
   - `wallet` (required): the user's wallet address
   - `amount` (required): the amount (considering decimals) the user wants to execute for the action
+  - **`reserveAddress`**: included when set; for **SVM** and action **`borrow`**, this repo **requires** a valid Solana address (base58, 32–44 chars)
 
 Example request:
 
 ```js
-const baseUrl = import.meta.env.DEFRAME_API_URL;
-const apiKey = import.meta.env.DEFRAME_API_KEY;
+const baseUrl = import.meta.env.VITE_APP_DEFRAME_API_URL;
+const apiKey = import.meta.env.VITE_APP_DEFRAME_API_KEY;
 
 const strategyId = "Kamino-SOL-solana";
 const wallet = "YOUR_WALLET";
@@ -369,21 +364,22 @@ Response type (shape):
 ```ts
 type DeframeBytecodeResponse = {
   feeCharged: string;
-  transaction: string;
+  /** Solana: base64-encoded serialized transaction (optional) */
+  transaction?: string;
 };
 ```
 
 Notes:
 
 - Ensure `amount` respects the token decimals.
-- The response is intended to be executed by the user's wallet.
+- For **SVM**, execution uses **`transaction`** (base64). `extractSolanaTransaction` normalizes URL-safe base64 before `atob`.
 
 ## Executing the bytecodes
 
-After you receive the response from `/strategies/:strategy-id/bytecode`, for **SVM** you must:
+After you receive the response from `/strategies/:strategy-id/bytecode`, for **SVM** this repo:
 
-1. Read the serialized Solana transaction (base64) from the response.
-2. Decode it to `Uint8Array` and call Privy’s `signAndSendTransaction` with your Solana wallet.
+1. Reads **`transaction`** (base64) from the JSON.
+2. Decodes to `Uint8Array` and calls Privy’s **`signAndSend.signAndSendTransaction`** with the wallet from `useWallets()`.
 
 Example:
 
@@ -440,8 +436,8 @@ After you process or modify the instructions on your side, convert them back to 
 ```ts
 {
   wallet: string;
-  instructions: any[];
-  lutsByAddress?: any[];
+  instructions: unknown[]; // at least one instruction
+  lutsByAddress?: Record<string, unknown>; // optional; default {}
 }
 ```
 

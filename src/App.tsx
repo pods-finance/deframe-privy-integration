@@ -6,6 +6,7 @@ import { arbitrum, base, mainnet, optimism, polygon, gnosis, hyperEvm, avalanche
 
 function App() {
   const privyAppId = import.meta.env.VITE_APP_PRIVY_APP_ID || ''
+  const heliusApiKey = import.meta.env.VITE_APP_HELIUS_API_KEY || ''
 
   if (!privyAppId) {
     throw new Error('VITE_APP_PRIVY_APP_ID is not set')
@@ -25,8 +26,8 @@ function App() {
       solana: {
         rpcs: {
           'solana:mainnet': {
-            rpc: createSolanaRpc(`https://solana-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_APP_ALCHEMY_API_KEY}`),
-            rpcSubscriptions: createSolanaRpcSubscriptions(`wss://solana-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_APP_ALCHEMY_API_KEY}`),
+            rpc: createSolanaRpc(`https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`),
+            rpcSubscriptions: createSolanaRpcSubscriptions(`wss://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`),
           },
         },
       },

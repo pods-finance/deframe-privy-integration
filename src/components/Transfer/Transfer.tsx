@@ -9,6 +9,9 @@ const CHAINS: { id: number; name: string }[] = [
   { id: 56, name: 'BSC' },
   { id: 100, name: 'Gnosis' },
   { id: 999, name: 'HyperEVM' },
+  { id: 43114, name: 'Avalanche' },
+  { id: 10, name: 'Optimism' },
+  { id: 100, name: 'Gnosis' },
 ]
 
 interface Props {

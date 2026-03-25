@@ -372,7 +372,7 @@ type DeframeBytecodeResponse = {
 Notes:
 
 - Ensure `amount` respects the token decimals.
-- For **SVM**, execution uses **`transaction`** (base64). `extractSolanaTransaction` normalizes URL-safe base64 before `atob`.
+- For **SVM**, execution uses **`transaction`** (base64).
 
 ## Executing the bytecodes
 
@@ -429,8 +429,8 @@ The response shape is:
 After you process or modify the instructions on your side, convert them back to a serialized transaction by calling:
 
 - **Method**: `POST`
-- **Path**: `/strategies/:strategyId/convert-instructions-to-base64`
-- **Headers**: `x-api-key: VITE_APP_DEFRAME_API_KEY` (or your API key env)
+- **Path**: `/svm/convert-instructions-to-base64`
+- **Headers**: `x-api-key: import.meta.env.VITE_APP_DEFRAME_API_KEY` (or your API key env)
 - **Body**:
 
 ```ts

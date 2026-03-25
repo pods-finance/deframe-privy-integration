@@ -36,6 +36,8 @@ const CHAIN_ID_TO_NAMES: Record<number, string[]> = {
   42161: ['arbitrum'],
   10: ['optimism'],
   43114: ['avalanche'],
+  999: ['hyperevm'],
+  100: ['gnosis'],
 }
 
 function strategyMatchesChainId(s: Strategy, chainId: number): boolean {

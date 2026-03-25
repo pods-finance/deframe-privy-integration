@@ -7,7 +7,6 @@ const CHAINS: { id: number; name: string }[] = [
   { id: 42161, name: 'Arbitrum' },
   { id: 137, name: 'Polygon' },
   { id: 56, name: 'BSC' },
-  { id: 100, name: 'Gnosis' },
   { id: 999, name: 'HyperEVM' },
   { id: 43114, name: 'Avalanche' },
   { id: 10, name: 'Optimism' },

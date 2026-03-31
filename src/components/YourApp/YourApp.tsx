@@ -1,10 +1,29 @@
 import { usePrivy } from '@privy-io/react-auth';
-import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { useState } from 'react';
 import Auth from '../Auth';
 import Wallets from '../Wallets';
 import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
+
+function SwapTabPanel() {
+  const { activeWalletAddress } = useWalletContext();
+  return (
+    <div className="flex flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+      <Wallets />
+      <Swap walletAddress={activeWalletAddress} />
+    </div>
+  );
+}
+
+function TransferTabPanel() {
+  const { activeWalletAddress } = useWalletContext();
+  return (
+    <div className="flex flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
+      <Wallets />
+      <Transfer walletAddress={activeWalletAddress} />
+    </div>
+  );
+}
 import Strategies from '../Strategies';
 import Swap from '../Swap';
 // import TokenBalances from '../TokenBalances';
@@ -31,7 +50,6 @@ function AppTabContent() {
 
 const YourApp = () => {
     const { ready, authenticated, user, logout } = usePrivy();
-    const { client } = useSmartWallets();
     const [activeTab, setActiveTab] = useState<'app' | 'transfer' | 'swap' | 'deframe'>('app');
     if (!ready) {
         return <div>Loading...</div>;
@@ -110,15 +128,9 @@ const YourApp = () => {
                             {activeTab === 'app' ? (
                                 <AppTabContent />
                             ) : activeTab === 'transfer' ? (
-                                <div className="flex flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
-                                    <Wallets />
-                                    <Transfer walletAddress={client?.account.address} />
-                                </div>
+                                <TransferTabPanel />
                             ) : activeTab === 'swap' ? (
-                                <div className="flex flex-col gap-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg backdrop-blur">
-                                    <Wallets />
-                                    <Swap walletAddress={client?.account.address} />
-                                </div>
+                                <SwapTabPanel />
                             ) : (
                                 <div>
                                     <EarnWidgetHost />

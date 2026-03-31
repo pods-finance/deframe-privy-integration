@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSwap } from './useSwap'
+import { isSolanaToSolanaQuote, useSwap } from './useSwap'
 
 interface Props {
   walletAddress?: string
@@ -35,12 +35,15 @@ const Swap = ({ walletAddress }: Props) => {
     })
   }
 
+  const isSolanaToSolana = isSolanaToSolanaQuote(quote)
+
   const handleExecute = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!quote?.quoteId || !destinationAddress.trim()) return
+    if (!quote?.quoteId) return
+    if (!isSolanaToSolana && !destinationAddress.trim()) return
     void executeSwap({
       quoteId: quote.quoteId,
-      destinationAddress: destinationAddress.trim(),
+      ...(!isSolanaToSolana ? { destinationAddress: destinationAddress.trim() } : {}),
     })
   }
 
@@ -136,22 +139,29 @@ const Swap = ({ walletAddress }: Props) => {
           </p>
 
           <form onSubmit={handleExecute} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-400" htmlFor="swap-destination-address">
-                Destination address
-              </label>
-              <input
-                id="swap-destination-address"
-                value={destinationAddress}
-                onChange={(e) => { setDestinationAddress(e.target.value) }}
-                placeholder="bc1q..."
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
-                required
-              />
-            </div>
+            {isSolanaToSolana ? (
+              <p className="text-xs text-slate-400">
+                Solana → Solana: <code className="rounded bg-slate-800 px-1">/v2/swap/bytecode</code> uses your Privy Solana wallet for both{' '}
+                <span className="text-slate-300">originAddress</span> and <span className="text-slate-300">destinationAddress</span>.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-slate-400" htmlFor="swap-destination-address">
+                  Destination address
+                </label>
+                <input
+                  id="swap-destination-address"
+                  value={destinationAddress}
+                  onChange={(e) => { setDestinationAddress(e.target.value) }}
+                  placeholder="bc1q..."
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+                  required
+                />
+              </div>
+            )}
             <button
               type="submit"
-              disabled={executeLoading || !destinationAddress.trim()}
+              disabled={executeLoading || (!isSolanaToSolana && !destinationAddress.trim())}
               className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
             >
               {executeLoading ? 'Executing…' : 'Execute swap'}

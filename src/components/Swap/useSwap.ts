@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
+import { useSignAndSendTransaction, useWallets } from '@privy-io/react-auth/solana'
 import {
   type DeframeBytecodeResponse,
   executeEvmBytecode,
+  executeSolanaBytecode,
 } from '../Strategies/executeStrategyTx'
 
 const SWAP_API_BASE = import.meta.env.VITE_APP_DEFRAME_API_URL || 'http://localhost:4001'
@@ -49,6 +51,17 @@ export interface SwapBytecodeResponse {
   }[],
 }
 
+interface SolanaSwapBytecodeResponse {
+  type?: string
+  chainId?: string
+  transactionData?: {
+    rawTransaction?: string
+  }
+  rawSwapData?: {
+    transaction?: string
+  }
+}
+
 function toDeframeBytecodeResponse(resp: SwapBytecodeResponse): DeframeBytecodeResponse {
   return {
     feeCharged: '0',
@@ -57,8 +70,34 @@ function toDeframeBytecodeResponse(resp: SwapBytecodeResponse): DeframeBytecodeR
   }
 }
 
+function toHex(bytes: Uint8Array): string {
+  let out = '0x'
+  for (const b of bytes) {
+    out += b.toString(16).padStart(2, '0')
+  }
+  return out
+}
+
+function isSolanaSwapBytecodeResponse(resp: unknown): resp is SolanaSwapBytecodeResponse {
+  if (!resp || typeof resp !== 'object') return false
+  const maybe = resp as SolanaSwapBytecodeResponse
+  return maybe.type === 'intra-chain-solana' || maybe.chainId === 'solana'
+}
+
+/** True when the quote is intra-chain Solana (bytecode must use the same Privy SVM address for origin + destination). */
+export function isSolanaToSolanaQuote(q: SwapQuote | null | undefined): boolean {
+  if (q == null) return false
+  return (
+    q.originChain.trim().toLowerCase() === 'solana' &&
+    q.destinationChain.trim().toLowerCase() === 'solana'
+  )
+}
+
 export function useSwap(originAddress?: string) {
   const smartWallets = useSmartWallets()
+  const signAndSend = useSignAndSendTransaction()
+  const solanaWalletsData = useWallets()
+  const solanaWallets = solanaWalletsData.wallets
   const [quote, setQuote] = useState<SwapQuote | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quoteError, setQuoteError] = useState<string | null>(null)
@@ -107,11 +146,38 @@ export function useSwap(originAddress?: string) {
 
   const executeSwap = async (params: {
     quoteId: string
-    destinationAddress: string
+    /** Required for non–Solana-to-Solana quotes; ignored when quote is solana → solana */
+    destinationAddress?: string
   }) => {
     if (!originAddress?.trim()) {
       setExecuteError('Origin address (wallet) is required')
       return
+    }
+
+    if (!quote) {
+      setExecuteError('Quote is missing; get a quote first.')
+      return
+    }
+    if (quote.quoteId !== params.quoteId) {
+      setExecuteError('Quote is stale; get a new quote before executing.')
+      return
+    }
+
+    const svmAddress = originAddress.trim()
+    const solanaToSolana = isSolanaToSolanaQuote(quote)
+    const destinationAddress = solanaToSolana
+      ? svmAddress
+      : (params.destinationAddress?.trim() ?? '')
+
+    if (!solanaToSolana && !destinationAddress) {
+      setExecuteError('Destination address is required')
+      return
+    }
+
+    const bytecodeBody = {
+      quoteId: params.quoteId,
+      originAddress: svmAddress,
+      destinationAddress,
     }
 
     try {
@@ -125,11 +191,7 @@ export function useSwap(originAddress?: string) {
           'Content-Type': 'application/json',
           ...(SWAP_API_KEY && { 'x-api-key': SWAP_API_KEY }),
         },
-        body: JSON.stringify({
-          destinationAddress: params.destinationAddress,
-          quoteId: params.quoteId,
-          originAddress: originAddress.trim(),
-        }),
+        body: JSON.stringify(bytecodeBody),
       })
 
       if (!res.ok) {
@@ -137,19 +199,64 @@ export function useSwap(originAddress?: string) {
         throw new Error(`Swap bytecode failed (${String(res.status)}). ${body}`.trim())
       }
 
-      const bytecodeResp = (await res.json()) as SwapBytecodeResponse
-      const deframeResp = toDeframeBytecodeResponse(bytecodeResp)
+      const payload = (await res.json()) as unknown
 
-      const tx = await executeEvmBytecode(deframeResp, {
-        getClientForChain: (p) => smartWallets.getClientForChain(p),
-      })
+      if (isSolanaSwapBytecodeResponse(payload)) {
+        const signingWallet = solanaWallets.find((w) => w.address === svmAddress)
+        if (!signingWallet) {
+          throw new Error(
+            'Solana swap: wallet address must exactly match your Privy Solana wallet (same base58 string in quote, bytecode body, and signer). Select SVM in Wallets.'
+          )
+        }
 
-      const hash = typeof tx === 'object' && tx !== null && 'hash' in tx
-        ? (tx as { hash: string }).hash
-        : typeof tx === 'string'
-          ? tx
-          : null
-      setTxHash(hash)
+        const rawTransaction =
+          payload.transactionData?.rawTransaction ??
+          payload.rawSwapData?.transaction
+
+        if (!rawTransaction) {
+          throw new Error('Swap SVM response missing transactionData.rawTransaction')
+        }
+
+        const solanaResp: DeframeBytecodeResponse = {
+          feeCharged: '0',
+          metadata: {
+            isCrossChain: false,
+            isSameChainSwap: true,
+            crossChainQuoteId: '',
+          },
+          bytecode: [],
+          transaction: rawTransaction,
+        }
+
+        const result = await executeSolanaBytecode(solanaResp, {
+          signAndSendTransaction: (input) => {
+            const wallet = input.wallet as Parameters<typeof signAndSend.signAndSendTransaction>[0]['wallet']
+            return signAndSend.signAndSendTransaction({
+              transaction: input.transaction,
+              wallet,
+              chain: input.chain ?? 'solana:mainnet',
+              options: input.options ?? { skipPreflight: true },
+            })
+          },
+          solanaWallet: signingWallet,
+        } as import('../Strategies/executeStrategyTx').SolanaExecutorDeps)
+
+        setTxHash(toHex(result.signature))
+      } else {
+        const bytecodeResp = payload as SwapBytecodeResponse
+        const deframeResp = toDeframeBytecodeResponse(bytecodeResp)
+
+        const tx = await executeEvmBytecode(deframeResp, {
+          getClientForChain: (p) => smartWallets.getClientForChain(p),
+        })
+
+        const hash = typeof tx === 'object' && tx !== null && 'hash' in tx
+          ? (tx as { hash: string }).hash
+          : typeof tx === 'string'
+            ? tx
+            : null
+        setTxHash(hash)
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unknown error'
       setExecuteError(msg)

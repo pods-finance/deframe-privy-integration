@@ -23,7 +23,7 @@ export type EvmChainId = (typeof EVM_CHAINS)[number]['id']
 
 export function useWalletsHook() {
     const [walletEnvironment, setWalletEnvironment] = useState<WalletEnvironment>('EVM')
-    const [selectedEvmChainId, setSelectedEvmChainId] = useState<EvmChainId>(base.id)
+    const [selectedEvmChainId, setSelectedEvmChainId] = useState<EvmChainId>(mainnet.id)
 
     const selectedChain = EVM_CHAINS.find((c) => c.id === selectedEvmChainId) ?? EVM_CHAINS[0]
 

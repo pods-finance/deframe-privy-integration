@@ -2,6 +2,8 @@
  * Executes Deframe strategy bytecode as EVM (smart wallet) or SVM (Solana) transactions.
  */
 
+import { Transaction, VersionedTransaction } from '@solana/web3.js'
+
 export interface DeframeEvmBytecode {
   to: string
   value: string
@@ -46,6 +48,11 @@ function normalizeBase64(str: string): string {
   return replaced + '='.repeat(pad)
 }
 
+/**
+ * Decode a base64 Solana wire transaction (e.g. Jupiter) without mutating bytes.
+ * Prefer {@link VersionedTransaction.deserialize} — legacy {@link Transaction} wire
+ * format is handled only as fallback; passing wrong parser causes signature verify failures on-chain.
+ */
 function extractSolanaTransaction(
   resp: DeframeBytecodeResponse
 ): Uint8Array | null {
@@ -54,13 +61,15 @@ function extractSolanaTransaction(
   if (!raw || typeof raw !== 'string') return null
 
   try {
-    const base64 = raw.includes('+') || raw.includes('/') ? raw : normalizeBase64(raw)
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i)
+    const base64 = raw.includes('+') || raw.includes('/') ? raw : normalizeBase64(raw.trim())
+    const buf = Buffer.from(base64, 'base64')
+    try {
+      VersionedTransaction.deserialize(buf)
+    } catch {
+      Transaction.from(buf)
     }
-    return bytes
+    // Preserve exact Jupiter / builder bytes — do not re-serialize (avoids canonicalization drift)
+    return new Uint8Array(buf)
   } catch {
     return null
   }

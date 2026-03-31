@@ -4,6 +4,7 @@ import {
   arbitrum,
   avalanche,
   base,
+  bsc,
   gnosis,
   hyperEvm,
   mainnet,
@@ -49,13 +50,17 @@ const CHAIN_ID_TO_RPC_KEY: Record<number, string> = {
   999: 'https://hyperliquid-mainnet.g.alchemy.com/v2',
 }
 
+function readViteEnvString(key: string): string | undefined {
+  const env = import.meta.env as unknown as Record<string, unknown>
+  const value = env[key]
+  return typeof value === 'string' ? value : undefined
+}
+
 function getRpcUrlForChain(chainId: number): string | undefined {
-  const key = CHAIN_ID_TO_RPC_KEY[chainId]
-  if (!key) return undefined
-  const baseUrl = (import.meta.env as Record<string, string | undefined>)[key]
-  const apiKey = import.meta.env.VITE_APP_ALCHEMY_API_KEY
-  if (typeof baseUrl !== 'string' || !baseUrl) return undefined
-  if (typeof apiKey === 'string' && apiKey && baseUrl.includes('/v2')) {
+  const baseUrl = CHAIN_ID_TO_RPC_KEY[chainId]
+  if (!baseUrl) return undefined
+  const apiKey = readViteEnvString('VITE_APP_ALCHEMY_API_KEY')
+  if (apiKey && baseUrl.includes('/v2')) {
     return `${baseUrl}/${apiKey}`
   }
   return baseUrl

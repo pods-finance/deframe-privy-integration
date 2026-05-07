@@ -230,16 +230,15 @@ export function useSwap(originAddress?: string) {
 
         const result = await executeSolanaBytecode(solanaResp, {
           signAndSendTransaction: (input) => {
-            const wallet = input.wallet as Parameters<typeof signAndSend.signAndSendTransaction>[0]['wallet']
             return signAndSend.signAndSendTransaction({
               transaction: input.transaction,
-              wallet,
+              wallet: input.wallet,
               chain: input.chain ?? 'solana:mainnet',
               options: input.options ?? { skipPreflight: true },
             })
           },
           solanaWallet: signingWallet,
-        } as import('../Strategies/executeStrategyTx').SolanaExecutorDeps)
+        })
 
         setTxHash(toHex(result.signature))
       } else {

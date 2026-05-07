@@ -36,6 +36,8 @@ const Strategy = ({
     setToTokenAddress,
     toChainId,
     setToChainId,
+    destinationAddress,
+    setDestinationAddress,
     reserveAddress,
     setReserveAddress,
     bytecodesLoading,
@@ -212,6 +214,21 @@ const Strategy = ({
               inputMode="numeric"
             />
           </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-slate-400" htmlFor={`destinationAddress-${strategy.id}`}>
+            Destination Address
+          </label>
+          <input
+            id={`destinationAddress-${strategy.id}`}
+            value={destinationAddress}
+            onChange={(e) => {
+              setDestinationAddress(e.currentTarget.value)
+            }}
+            placeholder="0x..."
+            className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm font-mono text-slate-100 placeholder:text-slate-500"
+          />
         </div>
 
         {strategy.network?.toLowerCase() === 'solana' && (

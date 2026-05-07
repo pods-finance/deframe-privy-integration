@@ -80,6 +80,7 @@ export function useStrategy({
   const [fromChainId, setFromChainId] = useState('')
   const [toTokenAddress, setToTokenAddress] = useState('')
   const [toChainId, setToChainId] = useState('')
+  const [destinationAddress, setDestinationAddress] = useState('')
   const [reserveAddress, setReserveAddress] = useState('')
   const [bytecodes, setBytecodes] = useState<DeframeBytecodeResponse | null>(null)
   const [bytecodesLoading, setBytecodesLoading] = useState(false)
@@ -155,6 +156,7 @@ export function useStrategy({
       if (fromChainId.trim()) url.searchParams.set('fromChainId', fromChainId.trim())
       if (toTokenAddress.trim()) url.searchParams.set('toTokenAddress', toTokenAddress.trim())
       if (toChainId.trim()) url.searchParams.set('toChainId', toChainId.trim())
+      if (destinationAddress.trim()) url.searchParams.set('destinationAddress', destinationAddress.trim())
       if (reserveAddress.trim()) url.searchParams.set('reserveAddress', reserveAddress.trim())
 
       const res = await fetch(url.toString(), {
@@ -183,16 +185,15 @@ export function useStrategy({
         },
         {
           signAndSendTransaction: (input) => {
-            const wallet = input.wallet as Parameters<typeof signAndSend.signAndSendTransaction>[0]['wallet']
             return signAndSend.signAndSendTransaction({
               transaction: input.transaction,
-              wallet,
+              wallet: input.wallet,
               chain: input.chain ?? 'solana:mainnet',
               options: input.options ?? { skipPreflight: true },
             })
           },
           solanaWallet,
-        } as import('./executeStrategyTx').SolanaExecutorDeps
+        }
       )
       console.log({ tx })
     } catch (e: unknown) {
@@ -220,6 +221,8 @@ export function useStrategy({
     setToTokenAddress,
     toChainId,
     setToChainId,
+    destinationAddress,
+    setDestinationAddress,
     reserveAddress,
     setReserveAddress,
     bytecodes,

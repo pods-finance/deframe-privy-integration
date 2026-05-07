@@ -2,6 +2,7 @@
  * Executes Deframe strategy bytecode as EVM (smart wallet) or SVM (Solana) transactions.
  */
 
+import type { ConnectedStandardSolanaWallet } from '@privy-io/react-auth/solana'
 import { Transaction, VersionedTransaction } from '@solana/web3.js'
 
 export interface DeframeEvmBytecode {
@@ -33,12 +34,12 @@ export interface SolanaExecutorDeps {
   signAndSendTransaction: (
     input: {
       transaction: Uint8Array
-      wallet: object
+      wallet: ConnectedStandardSolanaWallet
       chain?: string
       options?: { skipPreflight?: boolean }
     }
   ) => Promise<{ signature: Uint8Array }>
-  solanaWallet: object | null
+  solanaWallet?: ConnectedStandardSolanaWallet | null
 }
 
 /** Normalizes base64 (handles URL-safe and padding) for atob. */
@@ -103,10 +104,7 @@ export async function executeSolanaBytecode(
   deps: SolanaExecutorDeps
 ): Promise<{ signature: Uint8Array }> {
   const { signAndSendTransaction, solanaWallet } = deps
-  if (
-    !solanaWallet ||
-    typeof (solanaWallet as { address?: string }).address !== 'string'
-  ) {
+  if (!solanaWallet || typeof solanaWallet.address !== 'string') {
     throw new Error('Solana wallet not connected')
   }
 

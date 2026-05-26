@@ -306,6 +306,16 @@ const EarnWidgetHost = () => {
 
         emit({ type: 'HOST_ACK', clientTxId: payload.clientTxId })
 
+        if (rawTransactions.length === 0) {
+          emit({
+            type: 'SIGNATURE_ERROR',
+            clientTxId: payload.clientTxId,
+            code: 'INVALID_BYTECODE',
+            message: 'No bytecode calls to execute.',
+          })
+          return
+        }
+
         const grouped = new Map<number, RawBytecode[]>()
         const fallbackChainId = normalizeWalletChainId(activeWallet.chainId)
 
@@ -350,6 +360,10 @@ const EarnWidgetHost = () => {
 
           const calls = transactions.map((tx) => {
             const normalizedValue = toBigIntValue(tx.value)
+            const hasNonZeroValue = tx.value && tx.value.trim() !== '' && tx.value.trim() !== '0'
+            if (hasNonZeroValue && normalizedValue === undefined) {
+              throw new Error(`Invalid transaction value: ${tx.value}`)
+            }
             return {
               to: tx.to,
               data: tx.data,

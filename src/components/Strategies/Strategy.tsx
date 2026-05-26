@@ -51,8 +51,8 @@ const Strategy = ({
     walletEnvironment,
   })
 
-  const currentPositionValue = details?.spotPosition.currentPosition.value ?? '—'
-  const profitValue = details?.spotPosition.profit.value ?? '—'
+  const currentPositionValue = details?.spotPosition?.currentPosition?.value ?? '—'
+  const profitValue = details?.spotPosition?.profit?.value ?? '—'
 
   return (
     <div className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4">

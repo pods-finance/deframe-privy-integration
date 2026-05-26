@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { parseUnits } from 'viem'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { useSignAndSendTransaction, useWallets } from '@privy-io/react-auth/solana'
 import type { WalletEnvironment } from '../Wallets/useWallets'
@@ -67,7 +68,7 @@ export function useStrategy({
   const options = Array.isArray(strategy.availableActions) ? strategy.availableActions : []
   const [details, setDetails] = useState<DeframeStrategyDetailsResponse | null>(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
-  const isFetched = useRef(false)
+  const inFlightRef = useRef(false)
   const smartWallets = useSmartWallets()
   const signAndSend = useSignAndSendTransaction()
   const solanaWalletsData = useWallets()
@@ -98,12 +99,13 @@ export function useStrategy({
   }, [fetchStrategyDetails, strategy.id, walletAddress])
 
   useEffect(() => {
-    if (!walletAddress) return
-    if (isFetched.current) return
-    isFetched.current = true
+    if (!walletAddress) {
+      setDetails(null)
+      return
+    }
 
     void refreshDetails()
-  }, [refreshDetails, walletAddress])
+  }, [refreshDetails, walletAddress, strategy.id])
 
   const avgApy =
     typeof strategy.avgApy === 'number' ? strategy.avgApy : null
@@ -117,6 +119,9 @@ export function useStrategy({
         : null
 
   const fetchBytecodes = async (): Promise<void> => {
+    if (inFlightRef.current) return
+    inFlightRef.current = true
+
     try {
       setBytecodesLoading(true)
       setBytecodesError(null)
@@ -136,6 +141,16 @@ export function useStrategy({
       if (!amount.trim()) {
         throw new Error('Enter an amount')
       }
+      if (underlyingDecimals === null) {
+        throw new Error('Unknown token decimals for this strategy')
+      }
+
+      let amountAtomic: string
+      try {
+        amountAtomic = parseUnits(amount.trim(), underlyingDecimals).toString()
+      } catch {
+        throw new Error('Invalid amount format')
+      }
 
       const trimmedReserveAddress = reserveAddress.trim()
       if (walletEnvironment === 'SVM' && selectedAction === 'borrow') {
@@ -151,7 +166,7 @@ export function useStrategy({
       const url = new URL(`/strategies/${encodeURIComponent(strategy.id)}/bytecode`, baseUrl)
       url.searchParams.set('action', selectedAction)
       url.searchParams.set('wallet', walletAddress)
-      url.searchParams.set('amount', amount.trim())
+      url.searchParams.set('amount', amountAtomic)
       if (fromTokenAddress.trim()) url.searchParams.set('fromTokenAddress', fromTokenAddress.trim())
       if (fromChainId.trim()) url.searchParams.set('fromChainId', fromChainId.trim())
       if (toTokenAddress.trim()) url.searchParams.set('toTokenAddress', toTokenAddress.trim())
@@ -200,6 +215,7 @@ export function useStrategy({
       const message = e instanceof Error ? e.message : 'Unknown error'
       setBytecodesError(message)
     } finally {
+      inFlightRef.current = false
       setBytecodesLoading(false)
     }
   }

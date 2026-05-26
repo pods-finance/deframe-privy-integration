@@ -81,9 +81,16 @@ export async function executeEvmBytecode(
   deps: EvmExecutorDeps
 ): Promise<unknown> {
   const { getClientForChain } = deps
+  if (!resp.bytecode?.length) {
+    throw new Error('Empty EVM bytecode array from Deframe API')
+  }
+
   const first = resp.bytecode[0]
 
   const chainId = Number(first.chainId)
+  if (!Number.isFinite(chainId)) {
+    throw new Error(`Invalid chainId in bytecode: ${String(first.chainId)}`)
+  }
   const chainClient = await getClientForChain({ id: chainId })
   if (!chainClient) throw new Error('Chain client not found')
 

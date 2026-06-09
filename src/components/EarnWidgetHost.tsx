@@ -41,7 +41,7 @@ interface DeframeConfig {
   globalCurrency: 'USD'
   globalCurrencyExchangeRate: number
   theme: {
-    mode: 'dark'
+    mode: 'light'
     preset: 'default'
   }
   debug: boolean
@@ -441,7 +441,7 @@ const EarnWidgetHost = () => {
       globalCurrency: 'USD' as const,
       globalCurrencyExchangeRate: 1,
       theme: {
-        mode: 'dark' as const,
+        mode: 'light' as const,
         preset: 'default' as const,
       },
       debug: import.meta.env.DEV,

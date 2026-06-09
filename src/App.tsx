@@ -22,6 +22,7 @@ function App() {
           createOnLogin: "users-without-wallets",
         },
       },
+      // supportedChains: [gnosis],
       supportedChains: [arbitrum, base, bsc, mainnet, optimism, polygon, gnosis, hyperEvm, avalanche],
       solana: {
         rpcs: {

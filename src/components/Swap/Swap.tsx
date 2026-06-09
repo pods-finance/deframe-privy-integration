@@ -1,17 +1,17 @@
-import { useState } from 'react'
-import { isSolanaToSolanaQuote, useSwap } from './useSwap'
+import { useState } from 'react';
+import { isSolanaToSolanaQuote, useSwap } from './useSwap';
 
 interface Props {
-  walletAddress?: string
+  walletAddress?: string;
 }
 
 const Swap = ({ walletAddress }: Props) => {
-  const [originChain, setOriginChain] = useState('')
-  const [tokenIn, setTokenIn] = useState('')
-  const [amountIn, setAmountIn] = useState('')
-  const [destinationChain, setDestinationChain] = useState('')
-  const [tokenOut, setTokenOut] = useState('')
-  const [destinationAddress, setDestinationAddress] = useState('')
+  const [originChain, setOriginChain] = useState('');
+  const [tokenIn, setTokenIn] = useState('');
+  const [amountIn, setAmountIn] = useState('');
+  const [destinationChain, setDestinationChain] = useState('');
+  const [tokenOut, setTokenOut] = useState('');
+  const [destinationAddress, setDestinationAddress] = useState('');
 
   const {
     quote,
@@ -22,139 +22,140 @@ const Swap = ({ walletAddress }: Props) => {
     executeError,
     txHash,
     executeSwap,
-  } = useSwap(walletAddress)
+  } = useSwap(walletAddress);
 
   const handleGetQuote = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     void fetchQuote({
       originChain,
       tokenIn,
       amountIn,
       destinationChain,
       tokenOut,
-    })
-  }
+    });
+  };
 
-  const isSolanaToSolana = isSolanaToSolanaQuote(quote)
+  const isSolanaToSolana = isSolanaToSolanaQuote(quote);
 
   const handleExecute = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!quote?.quoteId) return
-    if (!isSolanaToSolana && !destinationAddress.trim()) return
+    e.preventDefault();
+    if (!quote?.quoteId) return;
+    if (!isSolanaToSolana && !destinationAddress.trim()) return;
     void executeSwap({
       quoteId: quote.quoteId,
       ...(!isSolanaToSolana ? { destinationAddress: destinationAddress.trim() } : {}),
-    })
-  }
+    });
+  };
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="text-lg font-semibold">Swap</h2>
+      <h2 className="ui-heading-section">Swap</h2>
 
       <form onSubmit={handleGetQuote} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-slate-400" htmlFor="swap-origin-chain">
+          <label className="ui-label" htmlFor="swap-origin-chain">
             Origin chain
           </label>
           <input
             id="swap-origin-chain"
             value={originChain}
-            onChange={(e) => { setOriginChain(e.target.value) }}
+            onChange={(e) => { setOriginChain(e.target.value); }}
             placeholder="polygon"
-            className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+            className="ui-input"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-slate-400" htmlFor="swap-token-in">
+          <label className="ui-label" htmlFor="swap-token-in">
             Token in (address)
           </label>
           <input
             id="swap-token-in"
             value={tokenIn}
-            onChange={(e) => { setTokenIn(e.target.value) }}
+            onChange={(e) => { setTokenIn(e.target.value); }}
             placeholder="0x..."
-            className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+            className="ui-input ui-input-mono"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-slate-400" htmlFor="swap-amount-in">
+          <label className="ui-label" htmlFor="swap-amount-in">
             Amount in
           </label>
           <input
             id="swap-amount-in"
             value={amountIn}
-            onChange={(e) => { setAmountIn(e.target.value) }}
+            onChange={(e) => { setAmountIn(e.target.value); }}
             placeholder="10000"
-            className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+            className="ui-input"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-slate-400" htmlFor="swap-destination-chain">
+          <label className="ui-label" htmlFor="swap-destination-chain">
             Destination chain
           </label>
           <input
             id="swap-destination-chain"
             value={destinationChain}
-            onChange={(e) => { setDestinationChain(e.target.value) }}
+            onChange={(e) => { setDestinationChain(e.target.value); }}
             placeholder="bitcoin"
-            className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+            className="ui-input"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-slate-400" htmlFor="swap-token-out">
+          <label className="ui-label" htmlFor="swap-token-out">
             Token out (address)
           </label>
           <input
             id="swap-token-out"
             value={tokenOut}
-            onChange={(e) => { setTokenOut(e.target.value) }}
+            onChange={(e) => { setTokenOut(e.target.value); }}
             placeholder="So111..."
-            className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+            className="ui-input ui-input-mono"
           />
         </div>
         <button
           type="submit"
           disabled={quoteLoading}
-          className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+          className="ui-btn-primary w-full sm:w-auto"
         >
           {quoteLoading ? 'Fetching quote…' : 'Get quote'}
         </button>
       </form>
 
-      {quoteError && (
-        <p className="text-sm text-red-300">{quoteError}</p>
-      )}
+      {quoteError && <p className="ui-text-error">{quoteError}</p>}
 
       {quote && (
-        <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-          <p className="mb-2 text-sm font-medium text-slate-300">Quote</p>
-          <p className="mb-1 text-xs text-slate-400">
+        <div className="ui-sub-panel">
+          <p className="mb-2 text-small font-semibold text-ink">Quote</p>
+          <p className="mb-1 text-caption text-gray-500">
             {quote.tokenIn.symbol} → {quote.tokenOut.symbol}
           </p>
-          <p className="mb-1 text-xs text-slate-400">
+          <p className="mb-1 text-caption text-gray-500">
             Amount out: {quote.tokenOut.amount} {quote.tokenOut.symbol}
           </p>
-          <p className="mb-3 text-xs text-slate-400">
+          <p className="mb-3 text-caption text-gray-500">
             Quote ID: {quote.quoteId}
           </p>
 
           <form onSubmit={handleExecute} className="flex flex-col gap-3">
             {isSolanaToSolana ? (
-              <p className="text-xs text-slate-400">
-                Solana → Solana: <code className="rounded bg-slate-800 px-1">/v2/swap/bytecode</code> uses your Privy Solana wallet for both{' '}
-                <span className="text-slate-300">originAddress</span> and <span className="text-slate-300">destinationAddress</span>.
+              <p className="text-caption text-gray-500">
+                Solana → Solana:{' '}
+                <code className="ui-code">/v2/swap/bytecode</code> uses your Privy Solana wallet
+                for both{' '}
+                <span className="text-ink">originAddress</span> and{' '}
+                <span className="text-ink">destinationAddress</span>.
               </p>
             ) : (
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-slate-400" htmlFor="swap-destination-address">
+                <label className="ui-label" htmlFor="swap-destination-address">
                   Destination address
                 </label>
                 <input
                   id="swap-destination-address"
                   value={destinationAddress}
-                  onChange={(e) => { setDestinationAddress(e.target.value) }}
+                  onChange={(e) => { setDestinationAddress(e.target.value); }}
                   placeholder="bc1q..."
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+                  className="ui-input"
                   required
                 />
               </div>
@@ -162,24 +163,18 @@ const Swap = ({ walletAddress }: Props) => {
             <button
               type="submit"
               disabled={executeLoading || (!isSolanaToSolana && !destinationAddress.trim())}
-              className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+              className="ui-btn-primary w-full sm:w-auto"
             >
               {executeLoading ? 'Executing…' : 'Execute swap'}
             </button>
           </form>
 
-          {executeError && (
-            <p className="mt-2 text-sm text-red-300">{executeError}</p>
-          )}
-          {txHash && (
-            <p className="mt-2 text-sm text-emerald-400">
-              Tx: {txHash}
-            </p>
-          )}
+          {executeError && <p className="mt-2 ui-text-error">{executeError}</p>}
+          {txHash && <p className="mt-2 ui-text-success">Tx: {txHash}</p>}
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Swap
+export default Swap;

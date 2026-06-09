@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useTransfer } from './useTransfer'
+import { useState } from 'react';
+import { useTransfer } from './useTransfer';
 
 const CHAINS: { id: number; name: string }[] = [
   { id: 1, name: 'Ethereum' },
@@ -11,44 +11,45 @@ const CHAINS: { id: number; name: string }[] = [
   { id: 43114, name: 'Avalanche' },
   { id: 10, name: 'Optimism' },
   { id: 100, name: 'Gnosis' },
-]
+];
 
 interface Props {
-  walletAddress?: string
+  walletAddress?: string;
 }
 
 const Transfer = ({ walletAddress }: Props) => {
-  const { executeTransfer, loading, error, txHash, walletAddress: hookWallet } = useTransfer(walletAddress)
-  const address = walletAddress ?? hookWallet ?? ''
+  const { executeTransfer, loading, error, txHash, walletAddress: hookWallet } = useTransfer(walletAddress);
+  const address = walletAddress ?? hookWallet ?? '';
 
-  const [walletOrigin, setWalletOrigin] = useState('')
-  const [walletDestination, setWalletDestination] = useState('')
-  const [token, setToken] = useState('0x0000000000000000000000000000000000000000')
-  const [amount, setAmount] = useState('')
-  const [chainId, setChainId] = useState('8453')
+  const [walletOrigin, setWalletOrigin] = useState('');
+  const [walletDestination, setWalletDestination] = useState('');
+  const [token, setToken] = useState('0x0000000000000000000000000000000000000000');
+  const [amount, setAmount] = useState('');
+  const [chainId, setChainId] = useState('8453');
 
-  const effectiveWalletOrigin = walletOrigin || address
+  const effectiveWalletOrigin = walletOrigin || address;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     void executeTransfer({
       walletOrigin: effectiveWalletOrigin,
       walletDestination,
       token,
       amount,
       chainId,
-    })
-  }
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">Transfer</h2>
-      <p className="text-sm text-slate-400">
-        Transfer tokens between wallets. Use <code className="rounded bg-slate-800 px-1">0x0000...0000</code> for native token (ETH, etc.).
+      <h2 className="ui-heading-section">Transfer</h2>
+      <p className="ui-text-secondary">
+        Transfer tokens between wallets. Use{' '}
+        <code className="ui-code">0x0000...0000</code> for native token (ETH, etc.).
       </p>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-400" htmlFor="transfer-wallet-origin">
+        <label className="ui-label" htmlFor="transfer-wallet-origin">
           From (wallet origin)
         </label>
         <input
@@ -56,13 +57,13 @@ const Transfer = ({ walletAddress }: Props) => {
           value={effectiveWalletOrigin}
           onChange={(e) => { setWalletOrigin(e.target.value); }}
           placeholder="0x..."
-          className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+          className="ui-input ui-input-mono"
           required
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-400" htmlFor="transfer-wallet-destination">
+        <label className="ui-label" htmlFor="transfer-wallet-destination">
           To (wallet destination)
         </label>
         <input
@@ -70,13 +71,13 @@ const Transfer = ({ walletAddress }: Props) => {
           value={walletDestination}
           onChange={(e) => { setWalletDestination(e.target.value); }}
           placeholder="0x..."
-          className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+          className="ui-input ui-input-mono"
           required
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-400" htmlFor="transfer-token">
+        <label className="ui-label" htmlFor="transfer-token">
           Token address
         </label>
         <input
@@ -84,13 +85,13 @@ const Transfer = ({ walletAddress }: Props) => {
           value={token}
           onChange={(e) => { setToken(e.target.value); }}
           placeholder="0x... or 0x0000...0000 for native"
-          className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500 font-mono"
+          className="ui-input ui-input-mono"
           required
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-400" htmlFor="transfer-amount">
+        <label className="ui-label" htmlFor="transfer-amount">
           Amount (in wei / smallest unit)
         </label>
         <input
@@ -98,21 +99,21 @@ const Transfer = ({ walletAddress }: Props) => {
           value={amount}
           onChange={(e) => { setAmount(e.target.value); }}
           placeholder="1000000000000000000"
-          className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
+          className="ui-input"
           inputMode="decimal"
           required
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-400" htmlFor="transfer-chain-id">
+        <label className="ui-label" htmlFor="transfer-chain-id">
           Chain ID
         </label>
         <select
           id="transfer-chain-id"
           value={chainId}
           onChange={(e) => { setChainId(e.target.value); }}
-          className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-sm text-slate-100"
+          className="ui-select"
         >
           {CHAINS.map((c) => (
             <option key={c.id} value={String(c.id)}>
@@ -122,18 +123,18 @@ const Transfer = ({ walletAddress }: Props) => {
         </select>
       </div>
 
-      {error && <p className="text-sm text-red-300">{error}</p>}
-      {txHash && <p className="text-sm text-emerald-300">Transaction sent: {txHash}</p>}
+      {error && <p className="ui-text-error">{error}</p>}
+      {txHash && <p className="ui-text-success">Transaction sent: {txHash}</p>}
 
       <button
         type="submit"
         disabled={loading || !effectiveWalletOrigin || !walletDestination || !token || !amount}
-        className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+        className="ui-btn-primary w-full sm:w-auto"
       >
         {loading ? 'Transferring…' : 'Transfer'}
       </button>
     </form>
-  )
-}
+  );
+};
 
-export default Transfer
+export default Transfer;

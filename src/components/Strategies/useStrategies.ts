@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { getStrategyChainLabel } from '../../utils/strategyChain'
 
 export interface Strategy {
   id: string
@@ -43,13 +44,14 @@ const CHAIN_ID_TO_NAMES: Record<number, string[]> = {
 function strategyMatchesChainId(s: Strategy, chainId: number): boolean {
   const sid = getStrategyChainId(s)
   if (sid !== undefined) return sid === chainId
-  const network = (getStrategyChain(s) ?? '').toLowerCase()
+  const network = getStrategyChainLabel(s).toLowerCase()
   const names = CHAIN_ID_TO_NAMES[chainId] ?? []
   return names.some((n) => network.includes(n))
 }
 
 function getStrategyChain(s: Strategy): string | undefined {
-  return s.chain ?? s.network
+  const label = getStrategyChainLabel(s)
+  return label === '' ? undefined : label
 }
 
 function isSolanaStrategy(s: Strategy): boolean {
@@ -85,7 +87,7 @@ export function useStrategies(
           throw new Error('Missing VITE_APP_DEFRAME_API_URL or VITE_APP_DEFRAME_API_KEY')
         }
 
-        const url = new URL('/strategies?limit=100', baseUrl).toString()
+        const url = new URL('/strategies?limit=400', baseUrl).toString()
         const res = await fetch(url, {
           method: 'GET',
           headers: {

@@ -2,6 +2,8 @@
  * Tokens por rede - derivados de asset e underlyingAsset das estratégias em /strategies.
  */
 
+import { getStrategyChainLabel } from '../../utils/strategyChain'
+
 export interface TokenConfig {
   address: `0x${string}`
   symbol: string
@@ -44,7 +46,7 @@ function getChainIdFromStrategy(s: StrategyLike): number | undefined {
     const n = typeof cid === 'number' ? cid : Number(cid)
     if (!Number.isNaN(n)) return n
   }
-  const network = (s.chain ?? s.network ?? '').toLowerCase()
+  const network = getStrategyChainLabel(s).toLowerCase()
   if (!network) return undefined
   return NETWORK_NAME_TO_CHAIN_ID[network]
 }

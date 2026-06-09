@@ -6,6 +6,7 @@ import {
   type DeframeBytecodeResponse,
   executeStrategyTx,
 } from './executeStrategyTx'
+import { isOndoBscStrategy } from '../../utils/strategyChain'
 import type { Strategy as StrategyModel } from './useStrategies'
 
 interface Params {
@@ -43,6 +44,7 @@ interface DeframeHistoricItem {
 
 interface DeframeSpotPosition {
   currentPosition: DeframeTokenAmount
+  currentPositionInShares?: DeframeTokenAmount
   underlyingBalanceUSD: number
   inceptionApy: number
   avgApy: number
@@ -76,6 +78,7 @@ export function useStrategy({
     solanaWallets.find((w) => w.address === walletAddress) ?? solanaWallets[0]
 
   const [amount, setAmount] = useState('')
+  const [amountInShares, setAmountInShares] = useState('')
   const [fromTokenAddress, setFromTokenAddress] = useState('')
   const [fromChainId, setFromChainId] = useState('')
   const [toTokenAddress, setToTokenAddress] = useState('')
@@ -116,6 +119,11 @@ export function useStrategy({
         ? strategy.assetDecimals
         : null
 
+  const isOndoBsc = isOndoBscStrategy(strategy)
+
+  const assetDecimals =
+    typeof strategy.assetDecimals === 'number' ? strategy.assetDecimals : null
+
   const fetchBytecodes = async (): Promise<void> => {
     try {
       setBytecodesLoading(true)
@@ -133,8 +141,12 @@ export function useStrategy({
       if (!selectedAction) {
         throw new Error('Select an action')
       }
-      if (!amount.trim()) {
-        throw new Error('Enter an amount')
+      const trimmedAmount = amount.trim()
+      const trimmedAmountInShares = amountInShares.trim()
+      const hasAmount = trimmedAmount.length > 0
+      const hasAmountInShares = isOndoBsc && trimmedAmountInShares.length > 0
+      if (!hasAmount && !hasAmountInShares) {
+        throw new Error(isOndoBsc ? 'Enter an amount or amountInShares' : 'Enter an amount')
       }
 
       const trimmedReserveAddress = reserveAddress.trim()
@@ -151,7 +163,8 @@ export function useStrategy({
       const url = new URL(`/strategies/${encodeURIComponent(strategy.id)}/bytecode`, baseUrl)
       url.searchParams.set('action', selectedAction)
       url.searchParams.set('wallet', walletAddress)
-      url.searchParams.set('amount', amount.trim())
+      if (hasAmount) url.searchParams.set('amount', trimmedAmount)
+      if (hasAmountInShares) url.searchParams.set('amountInShares', trimmedAmountInShares)
       if (fromTokenAddress.trim()) url.searchParams.set('fromTokenAddress', fromTokenAddress.trim())
       if (fromChainId.trim()) url.searchParams.set('fromChainId', fromChainId.trim())
       if (toTokenAddress.trim()) url.searchParams.set('toTokenAddress', toTokenAddress.trim())
@@ -211,8 +224,12 @@ export function useStrategy({
     refreshDetails,
     avgApyPct,
     underlyingDecimals,
+    assetDecimals,
+    isOndoBsc,
     amount,
     setAmount,
+    amountInShares,
+    setAmountInShares,
     fromTokenAddress,
     setFromTokenAddress,
     fromChainId,

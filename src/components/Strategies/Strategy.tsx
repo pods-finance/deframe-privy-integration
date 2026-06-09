@@ -26,8 +26,12 @@ const Strategy = ({
     refreshDetails,
     avgApyPct,
     underlyingDecimals,
+    assetDecimals,
+    isOndoBsc,
     amount,
     setAmount,
+    amountInShares,
+    setAmountInShares,
     fromTokenAddress,
     setFromTokenAddress,
     fromChainId,
@@ -52,6 +56,8 @@ const Strategy = ({
   })
 
   const currentPositionValue = details?.spotPosition.currentPosition.value ?? '—'
+  const currentPositionInSharesValue =
+    details?.spotPosition.currentPositionInShares?.value ?? '—'
   const profitValue = details?.spotPosition.profit.value ?? '—'
 
   return (
@@ -103,9 +109,17 @@ const Strategy = ({
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
-          <div className="flex justify-between gap-2">
-            <span>Position</span>
-            <span className="text-slate-200">{currentPositionValue}</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between gap-2">
+              <span>Position</span>
+              <span className="text-slate-200">{currentPositionValue}</span>
+            </div>
+            {isOndoBsc && (
+              <div className="flex justify-between gap-2">
+                <span>PositionInShares</span>
+                <span className="text-slate-200">{currentPositionInSharesValue}</span>
+              </div>
+            )}
           </div>
           <div className="flex justify-between gap-2">
             <span>Profit</span>
@@ -154,6 +168,25 @@ const Strategy = ({
             inputMode="decimal"
           />
         </div>
+
+        {isOndoBsc && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-400" htmlFor={`amountInShares-${strategy.id}`}>
+              AmountInShares
+              {assetDecimals === null ? '' : ` (decimals: ${String(assetDecimals)})`}
+            </label>
+            <input
+              id={`amountInShares-${strategy.id}`}
+              value={amountInShares}
+              onChange={(e) => {
+                setAmountInShares(e.currentTarget.value)
+              }}
+              placeholder="0.0"
+              className="w-full rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1 text-sm text-slate-100 placeholder:text-slate-500"
+              inputMode="decimal"
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col gap-1">

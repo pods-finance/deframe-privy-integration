@@ -13,6 +13,7 @@ import {
 } from 'viem/chains'
 import type { StrategyLike, TokenConfig } from './tokensByChain'
 import { buildTokensFromStrategies } from './tokensByChain'
+import { getStrategyChainLabel } from '../../utils/strategyChain'
 
 const CHAIN_ID_TO_CHAIN = {
   1: mainnet,
@@ -120,7 +121,7 @@ export function useTokenBalances(walletAddress?: string | null) {
         const strategiesData = (await strategiesRes.json()) as { data?: StrategyLike[] }
         const strategies: StrategyLike[] = Array.isArray(strategiesData.data) ? strategiesData.data : []
         const evmStrategies = strategies.filter(
-          (s) => (s.chain ?? s.network ?? '').toLowerCase() !== 'solana'
+          (s) => getStrategyChainLabel(s).toLowerCase() !== 'solana'
         )
         const tokensByChain = buildTokensFromStrategies(evmStrategies)
 

@@ -145,6 +145,7 @@ export function useStrategies(
     try {
       const url = new URL(`/strategies/${encodeURIComponent(strategyId)}`, baseUrl)
       url.searchParams.set('wallet', wallet)
+      url.searchParams.set('fromActions', '1')
 
       const res = await fetch(url.toString(), {
         method: 'GET',

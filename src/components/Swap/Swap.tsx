@@ -1,15 +1,29 @@
 import { useState } from 'react';
-import { isSolanaToSolanaQuote, useSwap } from './useSwap';
+import { isSolanaToSolanaChains, useSwap } from './useSwap';
+
+const SWAP_CHAINS: { slug: string; name: string }[] = [
+  { slug: 'ethereum', name: 'Ethereum' },
+  { slug: 'base', name: 'Base' },
+  { slug: 'arbitrum', name: 'Arbitrum' },
+  { slug: 'polygon', name: 'Polygon' },
+  { slug: 'bsc', name: 'BSC' },
+  { slug: 'hyperevm', name: 'HyperEVM' },
+  { slug: 'avalanche', name: 'Avalanche' },
+  { slug: 'optimism', name: 'Optimism' },
+  { slug: 'gnosis', name: 'Gnosis' },
+  { slug: 'solana', name: 'Solana' },
+  { slug: 'bitcoin', name: 'Bitcoin' },
+];
 
 interface Props {
   walletAddress?: string;
 }
 
 const Swap = ({ walletAddress }: Props) => {
-  const [originChain, setOriginChain] = useState('');
+  const [originChain, setOriginChain] = useState('polygon');
   const [tokenIn, setTokenIn] = useState('');
   const [amountIn, setAmountIn] = useState('');
-  const [destinationChain, setDestinationChain] = useState('');
+  const [destinationChain, setDestinationChain] = useState('bitcoin');
   const [tokenOut, setTokenOut] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
 
@@ -21,8 +35,9 @@ const Swap = ({ walletAddress }: Props) => {
     executeLoading,
     executeError,
     txHash,
-    executeSwap,
   } = useSwap(walletAddress);
+
+  const isLoading = quoteLoading || executeLoading;
 
   const handleGetQuote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,20 +47,11 @@ const Swap = ({ walletAddress }: Props) => {
       amountIn,
       destinationChain,
       tokenOut,
-    });
-  };
-
-  const isSolanaToSolana = isSolanaToSolanaQuote(quote);
-
-  const handleExecute = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quote?.quoteId) return;
-    if (!isSolanaToSolana && !destinationAddress.trim()) return;
-    void executeSwap({
-      quoteId: quote.quoteId,
       ...(!isSolanaToSolana ? { destinationAddress: destinationAddress.trim() } : {}),
     });
   };
+
+  const isSolanaToSolana = isSolanaToSolanaChains(originChain, destinationChain);
 
   return (
     <div className="flex flex-col gap-5">
@@ -56,13 +62,18 @@ const Swap = ({ walletAddress }: Props) => {
           <label className="ui-label" htmlFor="swap-origin-chain">
             Origin chain
           </label>
-          <input
+          <select
             id="swap-origin-chain"
             value={originChain}
             onChange={(e) => { setOriginChain(e.target.value); }}
-            placeholder="polygon"
-            className="ui-input"
-          />
+            className="ui-select"
+          >
+            {SWAP_CHAINS.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex flex-col gap-1">
           <label className="ui-label" htmlFor="swap-token-in">
@@ -92,13 +103,18 @@ const Swap = ({ walletAddress }: Props) => {
           <label className="ui-label" htmlFor="swap-destination-chain">
             Destination chain
           </label>
-          <input
+          <select
             id="swap-destination-chain"
             value={destinationChain}
             onChange={(e) => { setDestinationChain(e.target.value); }}
-            placeholder="bitcoin"
-            className="ui-input"
-          />
+            className="ui-select"
+          >
+            {SWAP_CHAINS.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex flex-col gap-1">
           <label className="ui-label" htmlFor="swap-token-out">
@@ -112,16 +128,41 @@ const Swap = ({ walletAddress }: Props) => {
             className="ui-input ui-input-mono"
           />
         </div>
+        {isSolanaToSolana ? (
+          <p className="text-caption text-gray-500">
+            Solana → Solana:{' '}
+            <code className="ui-code">/v2/swap/quote</code> uses your Privy Solana wallet
+            for both{' '}
+            <span className="text-ink">originAddress</span> and{' '}
+            <span className="text-ink">destinationAddress</span>.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <label className="ui-label" htmlFor="swap-destination-address">
+              Destination address
+            </label>
+            <input
+              id="swap-destination-address"
+              value={destinationAddress}
+              onChange={(e) => { setDestinationAddress(e.target.value); }}
+              placeholder="bc1q..."
+              className="ui-input"
+              required
+            />
+          </div>
+        )}
         <button
           type="submit"
-          disabled={quoteLoading}
+          disabled={isLoading || (!isSolanaToSolana && !destinationAddress.trim())}
           className="ui-btn-primary w-full sm:w-auto"
         >
-          {quoteLoading ? 'Fetching quote…' : 'Get quote'}
+          {quoteLoading ? 'Fetching quote…' : executeLoading ? 'Confirm in wallet…' : 'Swap'}
         </button>
       </form>
 
       {quoteError && <p className="ui-text-error">{quoteError}</p>}
+      {executeError && <p className="ui-text-error">{executeError}</p>}
+      {txHash && <p className="ui-text-success">Tx: {txHash}</p>}
 
       {quote && (
         <div className="ui-sub-panel">
@@ -132,45 +173,9 @@ const Swap = ({ walletAddress }: Props) => {
           <p className="mb-1 text-caption text-gray-500">
             Amount out: {quote.tokenOut.amount} {quote.tokenOut.symbol}
           </p>
-          <p className="mb-3 text-caption text-gray-500">
+          <p className="text-caption text-gray-500">
             Quote ID: {quote.quoteId}
           </p>
-
-          <form onSubmit={handleExecute} className="flex flex-col gap-3">
-            {isSolanaToSolana ? (
-              <p className="text-caption text-gray-500">
-                Solana → Solana:{' '}
-                <code className="ui-code">/v2/swap/bytecode</code> uses your Privy Solana wallet
-                for both{' '}
-                <span className="text-ink">originAddress</span> and{' '}
-                <span className="text-ink">destinationAddress</span>.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <label className="ui-label" htmlFor="swap-destination-address">
-                  Destination address
-                </label>
-                <input
-                  id="swap-destination-address"
-                  value={destinationAddress}
-                  onChange={(e) => { setDestinationAddress(e.target.value); }}
-                  placeholder="bc1q..."
-                  className="ui-input"
-                  required
-                />
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={executeLoading || (!isSolanaToSolana && !destinationAddress.trim())}
-              className="ui-btn-primary w-full sm:w-auto"
-            >
-              {executeLoading ? 'Executing…' : 'Execute swap'}
-            </button>
-          </form>
-
-          {executeError && <p className="mt-2 ui-text-error">{executeError}</p>}
-          {txHash && <p className="mt-2 ui-text-success">Tx: {txHash}</p>}
         </div>
       )}
     </div>

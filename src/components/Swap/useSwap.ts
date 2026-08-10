@@ -106,6 +106,18 @@ export function isSolanaToSolanaChains(originChain: string, destinationChain: st
   )
 }
 
+/** Off-ramp to BRL via PIX: destinationChain=fiat and tokenOut=BRL. */
+export function isFiatBrlDestination(destinationChain: string, tokenOut: string): boolean {
+  return (
+    destinationChain.trim().toLowerCase() === 'fiat' &&
+    tokenOut.trim().toUpperCase() === 'BRL'
+  )
+}
+
+export function isFiatDestination(destinationChain: string): boolean {
+  return destinationChain.trim().toLowerCase() === 'fiat'
+}
+
 /** True when the quote is intra-chain Solana (bytecode must use the same Privy SVM address for origin + destination). */
 export function isSolanaToSolanaQuote(q: SwapQuote | null | undefined): boolean {
   if (q == null) return false
@@ -196,8 +208,12 @@ export function useSwap(originAddress?: string) {
     amountIn: string
     destinationChain: string
     tokenOut: string
-    /** Required for non–Solana-to-Solana swaps; ignored when origin and destination chain are both solana */
+    /** Required for non–Solana-to-Solana / non-fiat swaps; ignored when origin and destination chain are both solana */
     destinationAddress?: string
+    /** Required when destinationChain=fiat and tokenOut=BRL */
+    pixKey?: string
+    /** Only sent when destinationChain=fiat and tokenOut=BRL */
+    thirdParty?: boolean
   }) => {
     if (!originAddress?.trim()) {
       setQuoteError('Origin address (wallet) is required')
@@ -206,11 +222,22 @@ export function useSwap(originAddress?: string) {
 
     const svmAddress = originAddress.trim()
     const solanaToSolana = isSolanaToSolanaChains(params.originChain, params.destinationChain)
+    const fiatDestination = isFiatDestination(params.destinationChain)
+    const fiatBrl = isFiatBrlDestination(params.destinationChain, params.tokenOut)
+    const pixKey = params.pixKey?.trim() ?? ''
+
+    if (fiatBrl && !pixKey) {
+      setQuoteError('PIX key is required when destination is fiat / BRL')
+      return
+    }
+
     const destinationAddress = solanaToSolana
       ? svmAddress
-      : (params.destinationAddress?.trim() ?? '')
+      : fiatDestination
+        ? ''
+        : (params.destinationAddress?.trim() ?? '')
 
-    if (!solanaToSolana && !destinationAddress) {
+    if (!solanaToSolana && !fiatDestination && !destinationAddress) {
       setQuoteError('Destination address is required')
       return
     }
@@ -231,7 +258,13 @@ export function useSwap(originAddress?: string) {
       url.searchParams.set('destinationChain', params.destinationChain)
       url.searchParams.set('tokenOut', params.tokenOut)
       url.searchParams.set('originAddress', svmAddress)
-      url.searchParams.set('destinationAddress', destinationAddress)
+      if (destinationAddress) {
+        url.searchParams.set('destinationAddress', destinationAddress)
+      }
+      if (fiatBrl) {
+        url.searchParams.set('pixKey', pixKey)
+        url.searchParams.set('thirdParty', String(params.thirdParty === true))
+      }
 
       const res = await fetch(url.toString(), {
         method: 'GET',

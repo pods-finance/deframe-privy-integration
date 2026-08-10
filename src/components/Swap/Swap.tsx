@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { isSolanaToSolanaChains, useSwap } from './useSwap';
+import {
+  isFiatBrlDestination,
+  isFiatDestination,
+  isSolanaToSolanaChains,
+  useSwap,
+} from './useSwap';
 
 const SWAP_CHAINS: { slug: string; name: string }[] = [
   { slug: 'ethereum', name: 'Ethereum' },
@@ -13,6 +18,7 @@ const SWAP_CHAINS: { slug: string; name: string }[] = [
   { slug: 'gnosis', name: 'Gnosis' },
   { slug: 'solana', name: 'Solana' },
   { slug: 'bitcoin', name: 'Bitcoin' },
+  { slug: 'fiat', name: 'Fiat' },
 ];
 
 interface Props {
@@ -26,6 +32,8 @@ const Swap = ({ walletAddress }: Props) => {
   const [destinationChain, setDestinationChain] = useState('bitcoin');
   const [tokenOut, setTokenOut] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
+  const [pixKey, setPixKey] = useState('');
+  const [thirdParty, setThirdParty] = useState(false);
 
   const {
     quote,
@@ -38,6 +46,25 @@ const Swap = ({ walletAddress }: Props) => {
   } = useSwap(walletAddress);
 
   const isLoading = quoteLoading || executeLoading;
+  const isSolanaToSolana = isSolanaToSolanaChains(originChain, destinationChain);
+  const fiatDestination = isFiatDestination(destinationChain);
+  const fiatBrl = isFiatBrlDestination(destinationChain, tokenOut);
+
+  const handleDestinationChainChange = (value: string) => {
+    setDestinationChain(value);
+    if (!isFiatBrlDestination(value, tokenOut)) {
+      setPixKey('');
+      setThirdParty(false);
+    }
+  };
+
+  const handleTokenOutChange = (value: string) => {
+    setTokenOut(value);
+    if (!isFiatBrlDestination(destinationChain, value)) {
+      setPixKey('');
+      setThirdParty(false);
+    }
+  };
 
   const handleGetQuote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,11 +74,19 @@ const Swap = ({ walletAddress }: Props) => {
       amountIn,
       destinationChain,
       tokenOut,
-      ...(!isSolanaToSolana ? { destinationAddress: destinationAddress.trim() } : {}),
+      ...(!isSolanaToSolana && !fiatDestination
+        ? { destinationAddress: destinationAddress.trim() }
+        : {}),
+      ...(fiatBrl
+        ? { pixKey: pixKey.trim(), thirdParty }
+        : {}),
     });
   };
 
-  const isSolanaToSolana = isSolanaToSolanaChains(originChain, destinationChain);
+  const submitDisabled =
+    isLoading ||
+    (fiatBrl && !pixKey.trim()) ||
+    (!isSolanaToSolana && !fiatDestination && !destinationAddress.trim());
 
   return (
     <div className="flex flex-col gap-5">
@@ -77,13 +112,13 @@ const Swap = ({ walletAddress }: Props) => {
         </div>
         <div className="flex flex-col gap-1">
           <label className="ui-label" htmlFor="swap-token-in">
-            Token in (address)
+            Token in (address or symbol)
           </label>
           <input
             id="swap-token-in"
             value={tokenIn}
             onChange={(e) => { setTokenIn(e.target.value); }}
-            placeholder="0x..."
+            placeholder="0x... or BRL"
             className="ui-input ui-input-mono"
           />
         </div>
@@ -106,7 +141,7 @@ const Swap = ({ walletAddress }: Props) => {
           <select
             id="swap-destination-chain"
             value={destinationChain}
-            onChange={(e) => { setDestinationChain(e.target.value); }}
+            onChange={(e) => { handleDestinationChainChange(e.target.value); }}
             className="ui-select"
           >
             {SWAP_CHAINS.map((c) => (
@@ -118,13 +153,13 @@ const Swap = ({ walletAddress }: Props) => {
         </div>
         <div className="flex flex-col gap-1">
           <label className="ui-label" htmlFor="swap-token-out">
-            Token out (address)
+            Token out (address or symbol)
           </label>
           <input
             id="swap-token-out"
             value={tokenOut}
-            onChange={(e) => { setTokenOut(e.target.value); }}
-            placeholder="So111..."
+            onChange={(e) => { handleTokenOutChange(e.target.value); }}
+            placeholder="So111... or BRL"
             className="ui-input ui-input-mono"
           />
         </div>
@@ -135,6 +170,13 @@ const Swap = ({ walletAddress }: Props) => {
             for both{' '}
             <span className="text-ink">originAddress</span> and{' '}
             <span className="text-ink">destinationAddress</span>.
+          </p>
+        ) : fiatDestination ? (
+          <p className="text-caption text-gray-500">
+            Fiat destination: <span className="text-ink">destinationAddress</span> is omitted.
+            {fiatBrl
+              ? ' PIX key is required for BRL off-ramp.'
+              : ' Set token out to BRL to enable PIX key / third party.'}
           </p>
         ) : (
           <div className="flex flex-col gap-1">
@@ -151,9 +193,36 @@ const Swap = ({ walletAddress }: Props) => {
             />
           </div>
         )}
+        <div className="flex flex-col gap-1">
+          <label className="ui-label" htmlFor="swap-pix-key">
+            PIX key
+          </label>
+          <input
+            id="swap-pix-key"
+            value={pixKey}
+            onChange={(e) => { setPixKey(e.target.value); }}
+            placeholder="CPF, CNPJ, phone, email, or UUID"
+            className="ui-input"
+            disabled={!fiatBrl}
+            required={fiatBrl}
+          />
+        </div>
+        <label
+          htmlFor="swap-third-party"
+          className={`flex items-center gap-2 text-small ${fiatBrl ? 'text-ink' : 'text-gray-500'}`}
+        >
+          <input
+            id="swap-third-party"
+            type="checkbox"
+            checked={thirdParty}
+            onChange={(e) => { setThirdParty(e.target.checked); }}
+            disabled={!fiatBrl}
+          />
+          Third party
+        </label>
         <button
           type="submit"
-          disabled={isLoading || (!isSolanaToSolana && !destinationAddress.trim())}
+          disabled={submitDisabled}
           className="ui-btn-primary w-full sm:w-auto"
         >
           {quoteLoading ? 'Fetching quote…' : executeLoading ? 'Confirm in wallet…' : 'Swap'}

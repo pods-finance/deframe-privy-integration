@@ -22,6 +22,7 @@
     "permissionless": "^0.3.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-qr-code": "^2.2.0",
     "react-redux": "^9.2.0",
     "tailwindcss": "^4.1.18",
     "viem": "^2.44.4"

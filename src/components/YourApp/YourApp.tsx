@@ -2,6 +2,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useState } from 'react';
 import Auth from '../Auth';
 import EarnWidgetHost from '../EarnWidgetHost';
+import Ramp, { RampKyc } from '../Ramp';
 import Strategies from '../Strategies';
 import Swap from '../Swap';
 import Transfer from '../Transfer/Transfer';
@@ -9,7 +10,7 @@ import Wallets from '../Wallets';
 import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
 
-type Tab = 'app' | 'transfer' | 'swap' | 'deframe';
+type Tab = 'app' | 'transfer' | 'swap' | 'kyc' | 'ramp' | 'deframe';
 
 function TabPanel({ children }: { children: React.ReactNode }) {
   return (
@@ -39,6 +40,30 @@ function TransferTabPanel() {
   );
 }
 
+function KycTabPanel() {
+  const { activeWalletAddress } = useWalletContext();
+  return (
+    <TabPanel>
+      <Wallets />
+      <RampKyc walletAddress={activeWalletAddress} />
+    </TabPanel>
+  );
+}
+
+function RampTabPanel() {
+  const { activeWalletAddress, client, solanaWallet } = useWalletContext();
+  return (
+    <TabPanel>
+      <Wallets />
+      <Ramp
+        walletAddress={activeWalletAddress}
+        evmAddress={client?.account.address}
+        solanaAddress={solanaWallet?.address}
+      />
+    </TabPanel>
+  );
+}
+
 function AppTabContent() {
   const ctx = useWalletContext();
   const walletAddress: string | undefined = ctx.activeWalletAddress ?? undefined;
@@ -62,6 +87,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'app', label: 'Your app' },
   { id: 'transfer', label: 'Transfer' },
   { id: 'swap', label: 'Swap' },
+  { id: 'kyc', label: 'KYC' },
+  { id: 'ramp', label: 'Ramp' },
   { id: 'deframe', label: 'Deframe SDK' },
 ];
 
@@ -115,6 +142,8 @@ const YourApp = () => {
               {activeTab === 'app' && <AppTabContent />}
               {activeTab === 'transfer' && <TransferTabPanel />}
               {activeTab === 'swap' && <SwapTabPanel />}
+              {activeTab === 'kyc' && <KycTabPanel />}
+              {activeTab === 'ramp' && <RampTabPanel />}
               {activeTab === 'deframe' && (
                 <div className="ui-panel-shell p-6 lg:p-8">
                   <EarnWidgetHost />

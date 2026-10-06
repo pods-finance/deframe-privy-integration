@@ -120,9 +120,10 @@ export function useTokenBalances(walletAddress?: string | null) {
         }
         const strategiesData = (await strategiesRes.json()) as { data?: StrategyLike[] }
         const strategies: StrategyLike[] = Array.isArray(strategiesData.data) ? strategiesData.data : []
-        const evmStrategies = strategies.filter(
-          (s) => getStrategyChainLabel(s).toLowerCase() !== 'solana'
-        )
+        const evmStrategies = strategies.filter((s) => {
+          const chain = getStrategyChainLabel(s).toLowerCase()
+          return chain !== 'solana' && !chain.includes('stellar')
+        })
         const tokensByChain = buildTokensFromStrategies(evmStrategies)
 
         const results: ChainBalances[] = []

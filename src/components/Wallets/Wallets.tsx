@@ -78,6 +78,9 @@ const Wallets = () => {
     solanaWallet,
     createSolanaWallet,
     shouldShowCreateSolanaButton,
+    stellarWallet,
+    createStellarWallet,
+    shouldShowCreateStellarButton,
     walletEnvironment,
     setWalletEnvironment,
     selectedEvmChainId,
@@ -102,9 +105,16 @@ const Wallets = () => {
         >
           SVM
         </button>
+        <button
+          type="button"
+          onClick={() => { setWalletEnvironment('STELLAR'); }}
+          className={`ui-btn-tab ui-btn-sm ${walletEnvironment === 'STELLAR' ? 'ui-btn-tab-active' : ''}`}
+        >
+          Stellar
+        </button>
       </div>
 
-      {walletEnvironment === 'EVM' ? (
+      {walletEnvironment === 'EVM' && (
         <>
           <div className="mb-4">
             <label htmlFor="evm-chain-select" className="ui-label mb-1 block">
@@ -142,7 +152,9 @@ const Wallets = () => {
             <CopyableAddress label="Smart" address={client?.account.address} />
           </div>
         </>
-      ) : (
+      )}
+
+      {walletEnvironment === 'SVM' && (
         <>
           {shouldShowCreateSolanaButton && (
             <div className="mb-4 flex justify-center">
@@ -155,10 +167,27 @@ const Wallets = () => {
               </button>
             </div>
           )}
-          <CopyableAddress
-            label="SVM"
-            address={(solanaWallet as { address?: string } | undefined)?.address}
-          />
+          <CopyableAddress label="SVM" address={solanaWallet?.address} />
+        </>
+      )}
+
+      {walletEnvironment === 'STELLAR' && (
+        <>
+          {shouldShowCreateStellarButton && (
+            <div className="mb-4 flex justify-center">
+              <button
+                type="button"
+                className="ui-btn-primary ui-btn-sm"
+                onClick={() => void createStellarWallet()}
+              >
+                Create Stellar wallet
+              </button>
+            </div>
+          )}
+          <CopyableAddress label="Stellar" address={stellarWallet?.address} />
+          <p className="mt-2 text-caption text-gray-400">
+            Tier 2 — strategies use Privy rawSign on the transaction hash, then broadcast to Horizon.
+          </p>
         </>
       )}
     </div>

@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useCreateWallet, usePrivy, useWallets } from '@privy-io/react-auth'
+import {
+  useCreateWallet as useCreateExtendedWallet,
+  useSignRawHash,
+} from '@privy-io/react-auth/extended-chains'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { useCreateWallet as useCreateSolanaWallet } from '@privy-io/react-auth/solana'
 import { createPublicClient, http } from 'viem'
 import { arbitrum, avalanche, base, bsc, gnosis, hyperEvm, mainnet, optimism, polygon } from 'viem/chains'
 
-export type WalletEnvironment = 'EVM' | 'SVM'
+export type WalletEnvironment = 'EVM' | 'SVM' | 'STELLAR'
+
+type LinkedAccount = { chainType?: string; address?: string }
 
 export const EVM_CHAINS = [
     { id: mainnet.id, name: 'Mainnet', chain: mainnet },
@@ -21,6 +27,13 @@ export const EVM_CHAINS = [
 
 export type EvmChainId = (typeof EVM_CHAINS)[number]['id']
 
+function findLinkedAccount(
+  accounts: LinkedAccount[] | undefined,
+  chainType: string
+): LinkedAccount | undefined {
+  return accounts?.find((account) => account.chainType === chainType)
+}
+
 export function useWalletsHook() {
     const [walletEnvironment, setWalletEnvironment] = useState<WalletEnvironment>('EVM')
     const [selectedEvmChainId, setSelectedEvmChainId] = useState<EvmChainId>(mainnet.id)
@@ -29,18 +42,25 @@ export function useWalletsHook() {
 
     const { createWallet } = useCreateWallet()
     const { createWallet: createSolanaWallet } = useCreateSolanaWallet()
+    const { createWallet: createExtendedWallet } = useCreateExtendedWallet()
+    const { signRawHash } = useSignRawHash()
     const { user, ready } = usePrivy()
     const { wallets } = useWallets()
     const { client, getClientForChain } = useSmartWallets()
 
+    const linkedAccounts = user?.linkedAccounts as LinkedAccount[] | undefined
+
     const shouldShowCreateButton = ready && wallets.length === 0
 
-    // @ts-expect-error Solana wallet type
-    const solanaWallet = user?.linkedAccounts.find((account: { chainType?: string }) => account.chainType === 'solana')
-    const shouldShowCreateSolanaButton =
-        ready &&
-        // @ts-expect-error Solana wallet type
-        user?.linkedAccounts.find((account: { chainType?: string }) => account.chainType === 'solana') === undefined
+    const solanaWallet = findLinkedAccount(linkedAccounts, 'solana')
+    const shouldShowCreateSolanaButton = ready && solanaWallet === undefined
+
+    const stellarWallet = findLinkedAccount(linkedAccounts, 'stellar')
+    const shouldShowCreateStellarButton = ready && stellarWallet === undefined
+
+    const createStellarWallet = async () => {
+        return createExtendedWallet({ chainType: 'stellar' })
+    }
 
     useEffect(() => {
         if (!client?.account.address) {
@@ -82,7 +102,11 @@ export function useWalletsHook() {
     }, [client?.account.address, getClientForChain, selectedChain])
 
     const activeWalletAddress =
-        walletEnvironment === 'EVM' ? client?.account.address : (solanaWallet as { address?: string } | undefined)?.address ?? ''
+        walletEnvironment === 'EVM'
+            ? client?.account.address
+            : walletEnvironment === 'SVM'
+              ? solanaWallet?.address ?? ''
+              : stellarWallet?.address ?? ''
 
     return {
         wallets,
@@ -93,6 +117,10 @@ export function useWalletsHook() {
         solanaWallet,
         createSolanaWallet,
         shouldShowCreateSolanaButton,
+        stellarWallet,
+        createStellarWallet,
+        shouldShowCreateStellarButton,
+        signRawHash,
         walletEnvironment,
         setWalletEnvironment,
         activeWalletAddress,

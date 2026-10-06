@@ -18,3 +18,12 @@ export function isOndoBscStrategy(s: StrategyChainFields & { protocol?: string }
   if (s.protocol?.toLowerCase() !== 'ondo') return false
   return getStrategyChainLabel(s).toLowerCase() === 'bsc'
 }
+
+export function isSolanaStrategy(s: StrategyChainFields): boolean {
+  return getStrategyChainLabel(s).toLowerCase() === 'solana'
+}
+
+export function isStellarStrategy(s: StrategyChainFields): boolean {
+  const label = getStrategyChainLabel(s).toLowerCase()
+  return label === 'stellar' || label.includes('stellar')
+}

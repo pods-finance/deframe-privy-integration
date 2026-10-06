@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_APP_DEFRAME_API_KEY: string;
   readonly VITE_APP_HELIUS_API_KEY: string;
   readonly VITE_APP_ALCHEMY_API_KEY?: string;
+  readonly VITE_APP_STELLAR_HORIZON_URL?: string;
 }
 
 interface ImportMeta {

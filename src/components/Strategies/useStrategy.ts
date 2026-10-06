@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSignRawHash } from '@privy-io/react-auth/extended-chains'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { useSignAndSendTransaction, useWallets } from '@privy-io/react-auth/solana'
 import type { WalletEnvironment } from '../Wallets/useWallets'
@@ -72,6 +73,7 @@ export function useStrategy({
   const isFetched = useRef(false)
   const smartWallets = useSmartWallets()
   const signAndSend = useSignAndSendTransaction()
+  const { signRawHash } = useSignRawHash()
   const solanaWalletsData = useWallets()
   const solanaWallets = solanaWalletsData.wallets
   const solanaWallet =
@@ -206,6 +208,10 @@ export function useStrategy({
             })
           },
           solanaWallet,
+        },
+        {
+          signRawHash: (input) => signRawHash(input),
+          stellarAddress: walletAddress,
         }
       )
       console.log({ tx })

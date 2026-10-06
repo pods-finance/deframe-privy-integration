@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getStrategyChainLabel } from '../../utils/strategyChain'
+import {
+  getStrategyChainLabel,
+  isSolanaStrategy as isSolanaChain,
+  isStellarStrategy as isStellarChain,
+} from '../../utils/strategyChain'
+import type { WalletEnvironment } from '../Wallets/useWallets'
 
 export interface Strategy {
   id: string
@@ -49,19 +54,17 @@ function strategyMatchesChainId(s: Strategy, chainId: number): boolean {
   return names.some((n) => network.includes(n))
 }
 
-function getStrategyChain(s: Strategy): string | undefined {
-  const label = getStrategyChainLabel(s)
-  return label === '' ? undefined : label
+function isSolanaStrategy(s: Strategy): boolean {
+  return isSolanaChain(s)
 }
 
-function isSolanaStrategy(s: Strategy): boolean {
-  const chain = getStrategyChain(s)?.toLowerCase()
-  return chain === 'solana'
+function isStellarStrategy(s: Strategy): boolean {
+  return isStellarChain(s)
 }
 
 export function useStrategies(
   walletAddress?: string,
-  walletEnvironment: 'EVM' | 'SVM' = 'EVM',
+  walletEnvironment: WalletEnvironment = 'EVM',
   selectedEvmChainId?: number
 ) {
   const [strategies, setStrategies] = useState<Strategy[]>([])
@@ -180,13 +183,18 @@ export function useStrategies(
   }
   const filteredStrategies = useMemo(() => {
     if (walletEnvironment === 'EVM') {
-      const evmStrategies = strategies.filter((s) => !isSolanaStrategy(s))
+      const evmStrategies = strategies.filter(
+        (s) => !isSolanaStrategy(s) && !isStellarStrategy(s)
+      )
       if (selectedEvmChainId !== undefined) {
         return evmStrategies.filter((s) =>
           strategyMatchesChainId(s, selectedEvmChainId)
         )
       }
       return evmStrategies
+    }
+    if (walletEnvironment === 'STELLAR') {
+      return strategies.filter((s) => isStellarStrategy(s))
     }
     return strategies.filter((s) => isSolanaStrategy(s))
   }, [strategies, walletEnvironment, selectedEvmChainId])

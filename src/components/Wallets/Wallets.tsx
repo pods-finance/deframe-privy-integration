@@ -1,5 +1,73 @@
+import { useEffect, useState } from 'react';
 import type { EvmChainId } from './useWallets';
 import { useWalletContext } from './useWalletContext';
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '0';
+    textarea.style.left = '0';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+  }
+}
+
+function CopyableAddress({ label, address }: { label: string; address?: string }) {
+  const [copied, setCopied] = useState(false);
+  const value = address?.trim();
+  const canCopy = Boolean(value);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      setCopied(false);
+    }, 1500);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [copied]);
+
+  const copyAddress = async () => {
+    if (!value) {
+      return;
+    }
+    const didCopy = await copyText(value);
+    setCopied(didCopy);
+  };
+
+  return (
+    <p className="flex items-center justify-between gap-3 text-small text-gray-500">
+      <span>{label}:</span>
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="break-all font-mono text-ink">{value ?? '—'}</span>
+        <button
+          type="button"
+          className="ui-btn-ghost ui-btn-sm shrink-0 px-0"
+          onClick={() => {
+            void copyAddress();
+          }}
+          disabled={!canCopy}
+          aria-label={`Copy ${label} address`}
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </span>
+    </p>
+  );
+}
 
 const Wallets = () => {
   const {
@@ -70,12 +138,8 @@ const Wallets = () => {
             </div>
           )}
           <div className="flex flex-col gap-1">
-            <p className="flex justify-between text-small text-gray-500">
-              EOA: <span className="font-mono text-ink">{wallets[0]?.address ?? '—'}</span>
-            </p>
-            <p className="flex justify-between text-small text-gray-500">
-              Smart: <span className="font-mono text-ink">{client?.account.address ?? '—'}</span>
-            </p>
+            <CopyableAddress label="EOA" address={wallets[0]?.address} />
+            <CopyableAddress label="Smart" address={client?.account.address} />
           </div>
         </>
       ) : (
@@ -91,12 +155,10 @@ const Wallets = () => {
               </button>
             </div>
           )}
-          <p className="flex justify-between text-small text-gray-500">
-            SVM:{' '}
-            <span className="font-mono text-ink">
-              {(solanaWallet as { address?: string } | undefined)?.address ?? '—'}
-            </span>
-          </p>
+          <CopyableAddress
+            label="SVM"
+            address={(solanaWallet as { address?: string } | undefined)?.address}
+          />
         </>
       )}
     </div>

@@ -3,6 +3,7 @@ import { protocols, record, scenarios } from './flow'
 import type { Protocol, Scenario, SettlementMode } from './flow'
 import { useStrategyTest } from './useStrategyTest'
 import type { WalletAdapter } from './useStrategyTest'
+import { simulateUserOperation } from './simulateUserOperation'
 
 export function StrategyTestPanel({ wallet, adapter }: { wallet: string; adapter: WalletAdapter }) {
   const flow = useStrategyTest(wallet, adapter)
@@ -106,7 +107,7 @@ export default function StrategyTest({ wallet }: { wallet: string }) {
     return client
   }
   const adapter: WalletAdapter = {
-    estimate: async (chainId, expectedWallet, calls) => (await getClient(chainId, expectedWallet)).estimateUserOperationGas({ calls }),
+    estimate: async (chainId, expectedWallet, calls) => simulateUserOperation(await getClient(chainId, expectedWallet), calls),
     submit: async (chainId, expectedWallet, calls) => (await getClient(chainId, expectedWallet)).sendUserOperation({ calls }),
     receipt: async (chainId, expectedWallet, hash) => {
       const receipt = await (await getClient(chainId, expectedWallet)).waitForUserOperationReceipt({ hash, timeout: 120_000 })

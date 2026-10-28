@@ -121,7 +121,10 @@ simulation cannot establish that a cross-chain destination can accept a deposit.
 
 **Prepare request** reads the customer-scoped strategy and creates one unsigned
 Action through `/strategies/:strategyId/bytecode`. **Simulate source transaction**
-calls Privy's bundler gas estimation without signing or broadcasting. **Submit
+uses full unsigned UserOperation preparation (fees, paymaster data and bundler
+gas estimation), without signing or broadcasting. Calling the standalone gas
+estimator with only `calls` skips fee preparation in Viem and can cause Pimlico
+to reject missing `maxFeePerGas` / `maxPriorityFeePerGas` fields. **Submit
 with Privy** is a separate, explicit user action. It submits one UserOperation,
 records its hash, verifies its receipt, and monitors `/actions/:id`. A source
 receipt is not shown as final settlement. Direct mode replays the confirmed

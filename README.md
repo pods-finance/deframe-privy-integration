@@ -91,6 +91,87 @@ If a step is rejected, re-upload that file and poll again. *1A · Avenia* stays 
 
 ---
 
+## Strategy test tab (preview #2630)
+
+Sign in with Privy, then open **Strategy test**. This EVM-only tab has separate
+settings from the existing app, swap, transfer and SDK tabs. It defaults to
+`https://pr-2630.preview.pods.finance`; enter that environment's customer API key.
+The key stays in React memory and is cleared on reload. No environment-file
+changes are required for these settings. Privy's app ID still comes from the
+existing `VITE_APP_PRIVY_APP_ID` configuration.
+
+The connected **Privy smart account** must own the funds and have the customer's
+strategy access. This app does not import or impersonate the separate Safe ending
+in `210a`. Its owner must connect through a supported wallet integration before
+that Safe could be used; the current tab supports Privy smart accounts only.
+
+For Aave Polygon USDC and Morpho Base USDC, select each step in order:
+
+1. Deposit 2 USDC from Arbitrum (`2000000` raw units).
+2. After settlement, withdraw the new position into USDC on the strategy chain.
+3. Deposit 2 USDC from the strategy chain.
+4. After settlement, withdraw the new position into USDC on Arbitrum.
+
+Withdrawals use `withdrawAll=false`. Their amount starts blank: calculate the
+amount attributable to the preceding settled deposit, excluding prior holdings,
+fees and rounding. The tab does not calculate Aave scaled-unit or Morpho share
+deltas automatically. It displays the position and Action inputs/outputs for
+review. Vault capacity and provider availability must be checked afresh; a source
+simulation cannot establish that a cross-chain destination can accept a deposit.
+
+**Prepare request** reads the customer-scoped strategy and creates one unsigned
+Action through `/strategies/:strategyId/bytecode`. **Simulate source transaction**
+uses full unsigned UserOperation preparation (fees, paymaster data and bundler
+gas estimation), without signing or broadcasting. Calling the standalone gas
+estimator with only `calls` skips fee preparation in Viem and can cause Pimlico
+to reject missing `maxFeePerGas` / `maxPriorityFeePerGas` fields. **Submit
+with Privy** is a separate, explicit user action. It submits one UserOperation,
+records its hash, verifies its receipt, and monitors `/actions/:id`. A source
+receipt is not shown as final settlement. Direct mode replays the confirmed
+source transaction through `/strategies/:strategyId/fulfill` with its source chain.
+
+For deposits, **Transfer to deposit address** requests
+`settlementMode=depositAddress`. The tab checks the returned `depositInstructions`
+against the selected chain, input token, raw amount, address and final recipient,
+then builds exactly that funding transfer (ERC-20 or native). It creates no child
+transfer Action and calls no legacy `/fulfill` endpoint in this mode. The server
+settlement worker owns execution and recovery. The current presets use USDC;
+native transfer serialization is covered by unit tests but has no native UI preset.
+
+Requests expire at the earlier of the API quote deadline and two minutes after
+request start. Changes to configuration invalidate the prepared request. Wallet
+identity is checked again before simulation/submission. A journal in localStorage
+contains only intent, Action ID, hashes and status, never keys or signatures.
+**Resume monitoring** checks the existing operation; it never sends it again.
+An attempt without a hash is ambiguous and needs wallet inspection before another
+request. Automatic polling stops at a terminal/review state or after 30 minutes.
+
+Wallet selection no longer sends a deployment transaction on mount or chain
+changes. Counterfactual deployment is handled during an explicitly submitted
+Privy operation, subject to the configured bundler/paymaster.
+
+### Verify without moving funds
+
+Use Node 24+ for the focused tests:
+
+```sh
+yarn test:strategy-flow
+yarn build
+yarn eslint src/components/StrategyTest src/components/Wallets/useWallets.ts src/components/YourApp/YourApp.tsx
+```
+
+With `yarn dev` running, open `/tests/fixtures/strategy-test.html` for a local
+browser fixture. Its API, wallet, bundler and receipts are **all stubs**; any
+nonempty fake API key is accepted. Exercise all four steps for both protocols,
+deposit-address funding, reload/resume, `?mode=simulation-failure`, and
+`?mode=ambiguous-submit`. Counters expose requests, simulations, submissions and
+fulfillment. This fixture is not an entry in the production build.
+
+These tests do not verify live Privy login, paymaster sponsorship, RPC simulation,
+funding, provider execution or destination settlement. The existing repository
+also has unrelated lint failures and a missing Onest font asset; scoped lint and
+the build should be checked separately from those baseline issues.
+
 ## Resources
 
 - [Deframe documentation](https://docs.deframe.io/)

@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:strategy-flow": "node --experimental-strip-types --test tests/strategy-test-flow.test.mjs tests/strategy-simulation.test.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

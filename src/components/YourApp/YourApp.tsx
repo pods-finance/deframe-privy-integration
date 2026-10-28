@@ -4,19 +4,29 @@ import Auth from '../Auth';
 import EarnWidgetHost from '../EarnWidgetHost';
 import Ramp, { RampKyc } from '../Ramp';
 import Strategies from '../Strategies';
+import StrategyTest from '../StrategyTest/StrategyTest';
 import Swap from '../Swap';
 import Transfer from '../Transfer/Transfer';
 import Wallets from '../Wallets';
 import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
 
-type Tab = 'app' | 'transfer' | 'swap' | 'kyc' | 'ramp' | 'deframe';
+type Tab = 'strategy-test' | 'app' | 'transfer' | 'swap' | 'kyc' | 'ramp' | 'deframe';
 
 function TabPanel({ children }: { children: React.ReactNode }) {
   return (
     <div className="ui-panel-shell flex flex-col gap-5 p-6 lg:p-8">
       {children}
     </div>
+  );
+}
+
+function StrategyTestTabPanel() {
+  const { client } = useWalletContext();
+  return (
+    <TabPanel>
+      <StrategyTest wallet={client?.account.address ?? ''} />
+    </TabPanel>
   );
 }
 
@@ -85,6 +95,7 @@ function AppTabContent() {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'app', label: 'Your app' },
+  { id: 'strategy-test', label: 'Strategy test' },
   { id: 'transfer', label: 'Transfer' },
   { id: 'swap', label: 'Swap' },
   { id: 'kyc', label: 'KYC' },
@@ -94,7 +105,9 @@ const TABS: { id: Tab; label: string }[] = [
 
 const YourApp = () => {
   const { ready, authenticated, user, logout } = usePrivy();
-  const [activeTab, setActiveTab] = useState<Tab>('app');
+  const [activeTab, setActiveTab] = useState<Tab>(() =>
+    new URLSearchParams(window.location.search).get('tab') === 'strategy-test' ? 'strategy-test' : 'app'
+  );
 
   if (!ready) {
     return (
@@ -140,6 +153,7 @@ const YourApp = () => {
           <div className="flex w-full gap-6">
             <div className="flex w-full shrink-0 flex-col">
               {activeTab === 'app' && <AppTabContent />}
+              {activeTab === 'strategy-test' && <StrategyTestTabPanel />}
               {activeTab === 'transfer' && <TransferTabPanel />}
               {activeTab === 'swap' && <SwapTabPanel />}
               {activeTab === 'kyc' && <KycTabPanel />}

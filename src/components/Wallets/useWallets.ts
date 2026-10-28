@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useCreateWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import {
   useCreateWallet as useCreateExtendedWallet,
@@ -6,12 +6,11 @@ import {
 } from '@privy-io/react-auth/extended-chains'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { useCreateWallet as useCreateSolanaWallet } from '@privy-io/react-auth/solana'
-import { createPublicClient, http } from 'viem'
 import { arbitrum, avalanche, base, bsc, gnosis, hyperEvm, mainnet, optimism, polygon } from 'viem/chains'
 
 export type WalletEnvironment = 'EVM' | 'SVM' | 'STELLAR'
 
-type LinkedAccount = { chainType?: string; address?: string }
+interface LinkedAccount { chainType?: string; address?: string }
 
 export const EVM_CHAINS = [
     { id: mainnet.id, name: 'Mainnet', chain: mainnet },
@@ -38,15 +37,13 @@ export function useWalletsHook() {
     const [walletEnvironment, setWalletEnvironment] = useState<WalletEnvironment>('EVM')
     const [selectedEvmChainId, setSelectedEvmChainId] = useState<EvmChainId>(mainnet.id)
 
-    const selectedChain = EVM_CHAINS.find((c) => c.id === selectedEvmChainId) ?? EVM_CHAINS[0]
-
     const { createWallet } = useCreateWallet()
     const { createWallet: createSolanaWallet } = useCreateSolanaWallet()
     const { createWallet: createExtendedWallet } = useCreateExtendedWallet()
     const { signRawHash } = useSignRawHash()
     const { user, ready } = usePrivy()
     const { wallets } = useWallets()
-    const { client, getClientForChain } = useSmartWallets()
+    const { client } = useSmartWallets()
 
     const linkedAccounts = user?.linkedAccounts as LinkedAccount[] | undefined
 
@@ -62,44 +59,8 @@ export function useWalletsHook() {
         return createExtendedWallet({ chainType: 'stellar' })
     }
 
-    useEffect(() => {
-        if (!client?.account.address) {
-            return
-        }
-        const fetchBytecode = async () => {
-            const publicClient = createPublicClient({
-                chain: selectedChain.chain,
-                transport: http(),
-            })
-            const bytecode = await publicClient.getCode({
-                address: client.account.address,
-            })
-            if (bytecode === '0x' || !bytecode) {
-                console.log('Wallet was not been deployed!')
-                try {
-                    const chainClient = await getClientForChain({
-                        id: selectedChain.id
-                    })
-                    if (!chainClient) {
-                        console.log('Chain client not found')
-                        return
-                    }
-                    const tx: unknown = await chainClient.sendTransaction({
-                        to: client.account.address,
-                        value: 0n,
-                        data: '0x',
-                    })
-                    console.log({ tx })
-                } catch (e) {
-                    console.log('Chain client not found', e)
-                    return
-                }
-            } else {
-                console.log('Wallet was been deployed!')
-            }
-        }
-        void fetchBytecode()
-    }, [client?.account.address, getClientForChain, selectedChain])
+    // Privy deploys a counterfactual account when the user submits an operation.
+    // Reading a wallet or changing the chain must never submit a transaction.
 
     const activeWalletAddress =
         walletEnvironment === 'EVM'

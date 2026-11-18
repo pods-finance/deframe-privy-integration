@@ -1,6 +1,7 @@
 import { PrivyProvider } from '@privy-io/react-auth'
 import { SmartWalletsProvider } from '@privy-io/react-auth/smart-wallets';
 import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
+import Preview3364 from './components/Ramp/Preview3364';
 import YourApp from './components/YourApp';
 import { arbitrum, base, mainnet, optimism, polygon, gnosis, hyperEvm, avalanche, bsc } from 'viem/chains';
 
@@ -34,7 +35,7 @@ function App() {
       },
     }}>
       <SmartWalletsProvider>
-        <YourApp />
+        {window.location.pathname === '/pr-3364' ? <Preview3364 /> : <YourApp />}
       </SmartWalletsProvider>
     </PrivyProvider>
   )

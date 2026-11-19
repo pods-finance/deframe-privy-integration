@@ -5,13 +5,14 @@ import EarnWidgetHost from '../EarnWidgetHost';
 import Ramp, { RampKyc } from '../Ramp';
 import PixRampTab from '../Ramp/PixRampTab';
 import Strategies from '../Strategies';
+import PreviewBridgeSwap from '../Swap/PreviewBridgeSwap';
 import Swap from '../Swap';
 import Transfer from '../Transfer/Transfer';
 import Wallets from '../Wallets';
 import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
 
-type Tab = 'app' | 'transfer' | 'swap' | 'kyc' | 'ramp' | 'pix-onramp' | 'pix-offramp' | 'deframe';
+type Tab = 'app' | 'transfer' | 'swap' | 'kyc' | 'ramp' | 'pix-onramp' | 'pix-offramp' | 'bridge-swap' | 'deframe';
 
 function TabPanel({ children }: { children: React.ReactNode }) {
   return (
@@ -88,6 +89,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'app', label: 'Your app' },
   { id: 'transfer', label: 'Transfer' },
   { id: 'swap', label: 'Swap' },
+  ...(import.meta.env.VITE_PIX_PREVIEW === '3364' ? [{ id: 'bridge-swap' as const, label: 'Bridge swap' }] : []),
   { id: 'kyc', label: 'KYC' },
   { id: 'ramp', label: 'Ramp' },
   { id: 'pix-onramp', label: 'Pix onramp' },
@@ -97,7 +99,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 const YourApp = () => {
   const { ready, authenticated, user, logout } = usePrivy();
-  const [activeTab, setActiveTab] = useState<Tab>(window.location.pathname === '/pr-3364/pix' ? 'pix-onramp' : 'app');
+  const [activeTab, setActiveTab] = useState<Tab>(window.location.pathname === '/pr-3364/pix' ? 'pix-onramp' : window.location.pathname === '/pr-3364/swap' && import.meta.env.VITE_PIX_PREVIEW === '3364' ? 'bridge-swap' : 'app');
 
   if (!ready) {
     return (
@@ -140,7 +142,7 @@ const YourApp = () => {
           </nav>
         </header>
 
-        {activeTab === 'pix-onramp' || activeTab === 'pix-offramp' ? (
+        {activeTab === 'bridge-swap' ? <PreviewBridgeSwap /> : activeTab === 'pix-onramp' || activeTab === 'pix-offramp' ? (
           <PixRampTab onramp={activeTab === 'pix-onramp'} />
         ) : (
           <WalletProvider>

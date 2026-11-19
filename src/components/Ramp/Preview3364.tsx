@@ -39,7 +39,7 @@ export default function Preview3364() {
   }
   return <main className="ui-page ui-surface-warm min-h-screen py-10">
     <section className="ui-container flex flex-col gap-5">
-      <nav aria-label="Preview tools" className="flex gap-2"><a className="ui-btn-tab ui-btn-tab-active" aria-current="page" href="/pr-3364">Bridge quotes</a><a className="ui-btn-tab" href="/pr-3364/pix">Pix ramps</a></nav>
+      <nav aria-label="Preview tools" className="flex gap-2"><a className="ui-btn-tab ui-btn-tab-active" aria-current="page" href="/pr-3364">Bridge quotes</a><a className="ui-btn-tab" href="/pr-3364/swap">Bridge swap</a><a className="ui-btn-tab" href="/pr-3364/pix">Pix ramps</a></nav>
       <h1 className="ui-heading-section">BRL → USD preview quotes</h1>
       <p>PR #3364 · One unit per input. Each click requests a fresh five-minute quote. Pix can return unpaid payment instructions.</p>
       <label>Pix destination wallet (BRL KYC)

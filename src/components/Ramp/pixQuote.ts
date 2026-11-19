@@ -4,9 +4,10 @@ import { TOKENS } from './rampRoutes'
 
 export const PIX_TEST_SAFE = '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'
 
+export const gnosisUsdc = { label: 'USDC · Gnosis', chain: 'gnosis', token: TOKENS.usdc.gnosis, symbol: 'USDC', offramp: false }
+export const stableUsdt0 = { label: 'USDT0 · Stable', chain: 'stable', token: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736', symbol: 'USDT0', offramp: true }
 export const pixAssets = [
-  { label: 'USDC · Gnosis', chain: 'gnosis', token: TOKENS.usdc.gnosis, symbol: 'USDC', offramp: false },
-  { label: 'USDT0 · Stable', chain: 'stable', token: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736', symbol: 'USDT0', offramp: true },
+  gnosisUsdc, stableUsdt0,
   { label: 'USDC · Base', chain: 'base', token: TOKENS.usdc.base, symbol: 'USDC', offramp: true },
 ]
 

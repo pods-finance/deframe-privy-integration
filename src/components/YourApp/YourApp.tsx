@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Auth from '../Auth';
 import EarnWidgetHost from '../EarnWidgetHost';
 import Ramp, { RampKyc } from '../Ramp';
+import PixRampTab from '../Ramp/PixRampTab';
 import Strategies from '../Strategies';
 import Swap from '../Swap';
 import Transfer from '../Transfer/Transfer';
@@ -10,7 +11,7 @@ import Wallets from '../Wallets';
 import { WalletProvider } from '../Wallets/WalletContext';
 import { useWalletContext } from '../Wallets/useWalletContext';
 
-type Tab = 'app' | 'transfer' | 'swap' | 'kyc' | 'ramp' | 'deframe';
+type Tab = 'app' | 'transfer' | 'swap' | 'kyc' | 'ramp' | 'pix-onramp' | 'pix-offramp' | 'deframe';
 
 function TabPanel({ children }: { children: React.ReactNode }) {
   return (
@@ -89,12 +90,14 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'swap', label: 'Swap' },
   { id: 'kyc', label: 'KYC' },
   { id: 'ramp', label: 'Ramp' },
+  { id: 'pix-onramp', label: 'Pix onramp' },
+  { id: 'pix-offramp', label: 'Pix offramp' },
   { id: 'deframe', label: 'Deframe SDK' },
 ];
 
 const YourApp = () => {
   const { ready, authenticated, user, logout } = usePrivy();
-  const [activeTab, setActiveTab] = useState<Tab>('app');
+  const [activeTab, setActiveTab] = useState<Tab>(window.location.pathname === '/pr-3364/pix' ? 'pix-onramp' : 'app');
 
   if (!ready) {
     return (
@@ -116,11 +119,11 @@ const YourApp = () => {
             Hello {user?.email?.address ?? 'User'}
           </p>
           <nav className="flex flex-wrap items-center gap-2">
-            {window.location.host === 'localhost:5364' && <a className="ui-btn-tab ui-btn-tab-inverse" href="/pr-3364/pix">Pix ramps</a>}
             {TABS.map(({ id, label }) => (
               <button
                 key={id}
                 type="button"
+                aria-pressed={activeTab === id}
                 onClick={() => { setActiveTab(id); }}
                 className={`ui-btn-tab ui-btn-tab-inverse ${activeTab === id ? 'ui-btn-tab-active' : ''}`}
               >
@@ -137,22 +140,26 @@ const YourApp = () => {
           </nav>
         </header>
 
-        <WalletProvider>
-          <div className="flex w-full gap-6">
-            <div className="flex w-full shrink-0 flex-col">
-              {activeTab === 'app' && <AppTabContent />}
-              {activeTab === 'transfer' && <TransferTabPanel />}
-              {activeTab === 'swap' && <SwapTabPanel />}
-              {activeTab === 'kyc' && <KycTabPanel />}
-              {activeTab === 'ramp' && <RampTabPanel />}
-              {activeTab === 'deframe' && (
-                <div className="ui-panel-shell p-6 lg:p-8">
-                  <EarnWidgetHost />
-                </div>
-              )}
+        {activeTab === 'pix-onramp' || activeTab === 'pix-offramp' ? (
+          <PixRampTab onramp={activeTab === 'pix-onramp'} />
+        ) : (
+          <WalletProvider>
+            <div className="flex w-full gap-6">
+              <div className="flex w-full shrink-0 flex-col">
+                {activeTab === 'app' && <AppTabContent />}
+                {activeTab === 'transfer' && <TransferTabPanel />}
+                {activeTab === 'swap' && <SwapTabPanel />}
+                {activeTab === 'kyc' && <KycTabPanel />}
+                {activeTab === 'ramp' && <RampTabPanel />}
+                {activeTab === 'deframe' && (
+                  <div className="ui-panel-shell p-6 lg:p-8">
+                    <EarnWidgetHost />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </WalletProvider>
+          </WalletProvider>
+        )}
       </div>
     </div>
   );

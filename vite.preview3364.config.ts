@@ -27,6 +27,7 @@ async function serveQuote(req: IncomingMessage, res: ServerResponse, search: str
 }
 
 export default mergeConfig(base, defineConfig({
+  define: { 'import.meta.env.VITE_PIX_PREVIEW': JSON.stringify('3364') },
   server: { host: 'localhost', port: 5364, strictPort: true, cors: false },
   plugins: [{
     name: 'pr-3364-quote',

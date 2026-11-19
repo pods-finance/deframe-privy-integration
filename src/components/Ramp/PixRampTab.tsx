@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
-import QRCode from 'react-qr-code'
+import { QRCode } from 'react-qr-code'
 import { isAddress } from 'viem'
 import { humanToRaw } from './rampRoutes'
-import { getPixQuote, pixAssets } from './pixPreviewQuote'
+import { getPixQuote, pixAssets } from './pixQuote'
 
-function PixForm({ onramp, initialWallet }: { onramp: boolean, initialWallet: string }) {
+function PixForm({ onramp, wallet }: { onramp: boolean, wallet: string }) {
   const assets = pixAssets.filter(a => onramp || a.offramp)
   const [token, setToken] = useState(assets[0].token)
   const asset = assets.find(a => a.token === token) ?? assets[0]
-  const [wallet, setWallet] = useState(initialWallet)
   const [amount, setAmount] = useState('1')
   const [result, setResult] = useState<Awaited<ReturnType<typeof getPixQuote>>>()
   const [busy, setBusy] = useState(false)
@@ -29,7 +28,7 @@ function PixForm({ onramp, initialWallet }: { onramp: boolean, initialWallet: st
     if (!raw || busy) return
     setError(''); setBusy(true); setCopied(false)
     try {
-      const quote = await getPixQuote(onramp, asset, raw, wallet.trim())
+      const quote = await getPixQuote(onramp, asset, raw, wallet)
       setExpired(false); setResult(quote)
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not generate the quote.') }
     finally { setBusy(false) }
@@ -60,27 +59,20 @@ function PixForm({ onramp, initialWallet }: { onramp: boolean, initialWallet: st
           <input className="ui-input mt-1" inputMode="decimal" value={amount} onChange={e => { setAmount(e.target.value) }} />
         </label>
         <label className="ui-label">{onramp ? 'Receiving' : 'Funding'} wallet (BRL KYC)
-          <input className="ui-input ui-input-mono mt-1" value={wallet} onChange={e => { setWallet(e.target.value.trim()) }} />
+          <input className="ui-input ui-input-mono mt-1" value={wallet} readOnly />
         </label>
       </fieldset>
-      <button type="submit" className="ui-btn-primary" disabled={busy || !raw || raw === '0' || !isAddress(wallet)}>{busy ? 'Preparing…' : onramp ? 'Generate Pix QR' : 'Get payout quote'}</button>
+      <button type="submit" className="ui-btn-primary" disabled={busy || !raw || raw === '0'}>{busy ? 'Preparing…' : onramp ? 'Generate Pix QR' : 'Get payout quote'}</button>
     </form>}
     {error && <p role="alert" className="ui-text-error">{error}</p>}
   </section>
 }
 
-export default function PixPreview() {
-  const [onramp, setOnramp] = useState(true)
+export default function PixRampTab({ onramp }: { onramp: boolean }) {
   const { client } = useSmartWallets()
-  return <main className="ui-page ui-surface-warm min-h-screen px-4 py-10">
-    <div className="relative mx-auto flex max-w-xl flex-col gap-5">
-      <nav aria-label="Preview tools" className="flex gap-2"><a className="ui-btn-tab" href="/pr-3364">Bridge quotes</a><a className="ui-btn-tab ui-btn-tab-active" aria-current="page" href="/pr-3364/pix">Pix ramps</a></nav>
-      <h1 className="text-3xl font-semibold">Pix ramps</h1>
-      <div className="flex gap-2" role="group" aria-label="Payment direction">
-        <button aria-pressed={onramp} className={'ui-btn-tab ' + (onramp ? 'ui-btn-tab-active' : '')} onClick={() => { setOnramp(true) }}>Onramp</button>
-        <button aria-pressed={!onramp} className={'ui-btn-tab ' + (!onramp ? 'ui-btn-tab-active' : '')} onClick={() => { setOnramp(false) }}>Offramp</button>
-      </div>
-      <PixForm key={String(onramp)} onramp={onramp} initialWallet={client?.account.address ?? '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'} />
-    </div>
-  </main>
+  const wallet = client?.account.address
+  if (!wallet || !isAddress(wallet)) {
+    return <p role="status" className="ui-panel-shell p-6">Connect your Privy EVM smart wallet to request a Pix quote.</p>
+  }
+  return <PixForm key={wallet + String(onramp)} onramp={onramp} wallet={wallet} />
 }

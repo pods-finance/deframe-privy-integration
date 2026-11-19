@@ -1,5 +1,5 @@
 import { formatUnits } from 'viem'
-import { asRecord, parseResponseBody, readString } from './rampApi'
+import { asRecord, deframeApiHeaders, deframeApiUrl, parseResponseBody, readString } from './rampApi'
 import { TOKENS } from './rampRoutes'
 
 export const pixAssets = [
@@ -15,10 +15,14 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
     destinationChain: onramp ? asset.chain : 'fiat', tokenOut: onramp ? asset.token : 'BRL',
     [onramp ? 'destinationAddress' : 'originAddress']: wallet,
   })
-  const response = await fetch('/preview-3364-quote?' + params.toString(), { headers: { 'x-preview-quote': '3364' }, cache: 'no-store', signal: AbortSignal.timeout(60000) })
+  const preview = import.meta.env.VITE_PIX_PREVIEW === '3364'
+  const url = preview ? new URL('/preview-3364-quote', window.location.origin) : deframeApiUrl('/v2/swap/quote')
+  url.search = params.toString()
+  const headers = preview ? { 'x-preview-quote': '3364' } : deframeApiHeaders()
+  const response = await fetch(url, { headers, cache: 'no-store', signal: AbortSignal.timeout(60000) })
   const body = asRecord(await parseResponseBody(response))
   const quote = asRecord(body?.quote)
-  if (!response.ok || !quote) throw Error(readString(asRecord(body?.error)?.message) ?? readString(body?.error) ?? 'The preview could not prepare a quote.')
+  if (!response.ok || !quote) throw Error(readString(asRecord(body?.error)?.message) ?? readString(body?.error) ?? 'Could not prepare a Pix quote.')
   const output = asRecord(quote.tokenOut)
   const amount = readString(output?.amount)
   const symbol = onramp ? asset.symbol : 'BRL'

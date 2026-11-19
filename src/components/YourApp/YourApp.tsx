@@ -116,6 +116,7 @@ const YourApp = () => {
             Hello {user?.email?.address ?? 'User'}
           </p>
           <nav className="flex flex-wrap items-center gap-2">
+            {window.location.host === 'localhost:5364' && <a className="ui-btn-tab ui-btn-tab-inverse" href="/pr-3364/pix">Pix ramps</a>}
             {TABS.map(({ id, label }) => (
               <button
                 key={id}

@@ -2,6 +2,8 @@ import { formatUnits } from 'viem'
 import { asRecord, deframeApiHeaders, deframeApiUrl, parseResponseBody, readString } from './rampApi'
 import { TOKENS } from './rampRoutes'
 
+export const PIX_TEST_SAFE = '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'
+
 export const pixAssets = [
   { label: 'USDC · Gnosis', chain: 'gnosis', token: TOKENS.usdc.gnosis, symbol: 'USDC', offramp: false },
   { label: 'USDT0 · Stable', chain: 'stable', token: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736', symbol: 'USDT0', offramp: true },

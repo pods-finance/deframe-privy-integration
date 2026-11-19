@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { isAddress } from 'viem'
+import { PIX_TEST_SAFE } from './pixQuote'
 import { TOKENS } from './rampRoutes'
 
-const testSafe = '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'
 const sources = [
   { label: 'Pix BRL', chain: 'fiat', token: 'BRL', amount: '100' },
   { label: 'BRLA · Polygon', chain: 'polygon', token: TOKENS.brla.polygon, amount: '1000000000000000000' },
@@ -19,7 +19,7 @@ const preview = 'https://pr-3364.preview.pods.finance'
 export default function Preview3364() {
   const { ready, authenticated, login } = usePrivy()
   const { client } = useSmartWallets()
-  const [wallet, setWallet] = useState(testSafe)
+  const [wallet, setWallet] = useState<string>(PIX_TEST_SAFE)
   const [pending, setPending] = useState('')
   const [responses, setResponses] = useState<Record<string, string>>({})
   async function quote(id: string, params: URLSearchParams) {

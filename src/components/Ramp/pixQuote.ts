@@ -18,10 +18,10 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
     destinationChain: onramp ? asset.chain : 'fiat', tokenOut: onramp ? asset.token : 'BRL',
     [onramp ? 'destinationAddress' : 'originAddress']: wallet,
   })
-  const preview = import.meta.env.VITE_PIX_PREVIEW === '3364'
-  const url = preview ? new URL('/preview-3364-quote', window.location.origin) : deframeApiUrl('/v2/swap/quote')
+  const preview = import.meta.env.VITE_PIX_PREVIEW === '3500'
+  const url = preview ? new URL('/preview-3500-quote', window.location.origin) : deframeApiUrl('/v2/swap/quote')
   url.search = params.toString()
-  const headers = preview ? { 'x-preview-quote': '3364' } : deframeApiHeaders()
+  const headers = preview ? { 'x-preview-quote': '3500' } : deframeApiHeaders()
   const response = await fetch(url, { headers, cache: 'no-store', signal: AbortSignal.timeout(60000) })
   const body = asRecord(await parseResponseBody(response))
   const quote = asRecord(body?.quote)

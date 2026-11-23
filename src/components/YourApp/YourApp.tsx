@@ -86,20 +86,17 @@ function AppTabContent() {
 }
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'app', label: 'Your app' },
-  { id: 'transfer', label: 'Transfer' },
-  { id: 'swap', label: 'Swap' },
-  ...(import.meta.env.VITE_PIX_PREVIEW === '3364' ? [{ id: 'bridge-swap' as const, label: 'Bridge swap' }] : []),
-  { id: 'kyc', label: 'KYC' },
-  { id: 'ramp', label: 'Ramp' },
+  { id: 'bridge-swap', label: 'Bridge swap' },
+  { id: 'swap', label: 'Custom swap' },
+  { id: 'ramp', label: 'Ramp catalog' },
   { id: 'pix-onramp', label: 'Pix onramp' },
   { id: 'pix-offramp', label: 'Pix offramp' },
-  { id: 'deframe', label: 'Deframe SDK' },
 ];
 
 const YourApp = () => {
   const { ready, authenticated, user, logout } = usePrivy();
-  const [activeTab, setActiveTab] = useState<Tab>(window.location.pathname === '/pr-3364/pix' ? 'pix-onramp' : window.location.pathname === '/pr-3364/swap' && import.meta.env.VITE_PIX_PREVIEW === '3364' ? 'bridge-swap' : 'app');
+  const routes: Record<string, Tab> = { '/pr-3500/pix': 'pix-onramp', '/pr-3500/ramp': 'ramp', '/pr-3500/custom': 'swap' };
+  const [activeTab, setActiveTab] = useState<Tab>(routes[window.location.pathname] ?? 'bridge-swap');
 
   if (!ready) {
     return (
@@ -121,6 +118,7 @@ const YourApp = () => {
             Hello {user?.email?.address ?? 'User'}
           </p>
           <nav className="flex flex-wrap items-center gap-2">
+            <a className="ui-btn-tab ui-btn-tab-inverse" href="/pr-3500">#3500 quotes</a>
             {TABS.map(({ id, label }) => (
               <button
                 key={id}

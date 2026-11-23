@@ -8,7 +8,13 @@ import type { SwapQuoteResponse } from './useSwap'
 
 const brla = { symbol: 'BRLA', chain: 'polygon', id: 137, token: TOKENS.brla.polygon, decimals: 18 }
 const brs = { symbol: 'BRS', chain: 'base', id: 8453, token: '0x0000006238e3C7797Ae71827da303560bae1B125', decimals: 6 }
-const routes = [
+const previewPr = '3500'
+const reverseRoutes = [
+  { ...gnosisUsdc, id: 100, decimals: 6 },
+  { ...stableUsdt0, id: 988, decimals: 6 },
+].flatMap(from => [brla, brs].map(to => ({ from, to: { ...to, label: to.symbol + ' · ' + to.chain } })))
+const routes = [...reverseRoutes,
+  { from: brla, to: gnosisUsdc },
   { from: brla, to: stableUsdt0 },
   { from: brs, to: gnosisUsdc },
   { from: brs, to: stableUsdt0 },
@@ -18,7 +24,7 @@ async function prepare(route: typeof routes[number], amount: string, sender: str
   const { from, to } = route
   const search = new URLSearchParams({ originChain: from.chain, tokenIn: from.token, amountIn: amount,
     destinationChain: to.chain, tokenOut: to.token, originAddress: sender, destinationAddress: recipient, preferredProvider: 'pods' })
-  const res = await fetch('/preview-3364-quote?' + search.toString(), { headers: { 'x-preview-quote': '3364' }, cache: 'no-store', signal: AbortSignal.timeout(60000) })
+  const res = await fetch(`/preview-${previewPr}-quote?` + search.toString(), { headers: { 'x-preview-quote': previewPr }, cache: 'no-store', signal: AbortSignal.timeout(60000) })
   const body = await parseResponseBody(res)
   if (!res.ok) throw Error(readString(asRecord(asRecord(body)?.error)?.message) ?? 'Preview quote failed (HTTP ' + String(res.status) + ')')
   const { quote, chainId, transactionData } = body as SwapQuoteResponse

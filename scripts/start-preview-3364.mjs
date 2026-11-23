@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
+const pr = '3500'
 const privy = fileURLToPath(new URL('../',import.meta.url))
 const appConfigDir = execFileSync('git',['worktree','list','--porcelain'],{cwd:privy,encoding:'utf8'}).split('\n')[0].slice('worktree '.length)
 const require = createRequire(privy + '/package.json')
@@ -15,10 +16,10 @@ function aws(...args) {
 }
 async function previewKey() {
   if (process.env.DEFRAME_PREVIEW_API_KEY) return process.env.DEFRAME_PREVIEW_API_KEY
-  const svc=aws('ecs','describe-services','--cluster','deframe-dev','--services','deframe-preview-pr-3364-web').services[0]
+  const svc=aws('ecs','describe-services','--cluster','deframe-dev','--services',`deframe-preview-pr-${pr}-web`).services[0]
   const def=aws('ecs','describe-task-definition','--task-definition',svc.taskDefinition).taskDefinition
   const web=def.containerDefinitions.find(c=>c.name==='web')
-  const db='deframe-preview-pr-3364'
+  const db=`deframe-preview-pr-${pr}`
   const read=name=>{
     const [arn,version]=web.secrets.find(s=>s.name===name).valueFrom.split(':::')
     return aws('secretsmanager','get-secret-value','--secret-id',arn,...(version?['--version-id',version]:[])).SecretString
@@ -35,6 +36,6 @@ async function previewKey() {
   } finally {await mongo.close()}
 }
 let key
-try {key=await previewKey()} catch {console.error('Could not load the PR 3364 preview key. Refresh the deframe AWS session or supply DEFRAME_PREVIEW_API_KEY.');process.exit(1)}
-const child=spawn(process.execPath,[privy+'/node_modules/vite/bin/vite.js','--config','vite.preview3364.config.ts'],{cwd:privy,stdio:'inherit',env:{...process.env,VITE_APP_PRIVY_APP_ID:app.VITE_APP_PRIVY_APP_ID,DEFRAME_PREVIEW_API_KEY:key}})
+try {key=await previewKey()} catch {console.error(`Could not load the PR ${pr} preview key. Refresh the deframe AWS session or supply DEFRAME_PREVIEW_API_KEY.`);process.exit(1)}
+const child=spawn(process.execPath,[privy+'/node_modules/vite/bin/vite.js','--config','vite.preview3364.config.ts'],{cwd:privy,stdio:'inherit',env:{...process.env,DEFRAME_PREVIEW_PR:pr,VITE_APP_PRIVY_APP_ID:app.VITE_APP_PRIVY_APP_ID,VITE_APP_HELIUS_API_KEY:app.VITE_APP_HELIUS_API_KEY ?? '',DEFRAME_PREVIEW_API_KEY:key}})
 child.on('exit',code=>process.exit(code??1))

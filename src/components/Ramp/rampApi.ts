@@ -15,6 +15,7 @@ export interface RampApiResult<T = unknown> {
 
 export function deframeApiHeaders(jsonBody = false): Record<string, string> {
   const headers: Record<string, string> = {}
+  if (import.meta.env.VITE_PIX_PREVIEW === '3500') headers['x-preview-quote'] = '3500'
   if (API_KEY) headers['x-api-key'] = API_KEY
   if (jsonBody) headers['Content-Type'] = 'application/json'
   return headers

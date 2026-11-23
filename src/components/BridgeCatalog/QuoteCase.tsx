@@ -90,9 +90,10 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
       const src = asRecord(q?.tokenIn), dst = asRecord(q?.tokenOut)
       const net = readString(dst?.amount)
       const id = readString(q?.quoteId) ?? readString(q?.id)
+      const providerMatches = ['pods', 'deframe'].includes(String(q?.provider)) || (row.provider !== 'pods' && q?.provider === row.provider)
       if (!id || !net || !/^\d+$/.test(net) || !BigInt(net) || q?.originChain !== input.chain || q.destinationChain !== output.chain ||
-        !['pods', 'deframe'].includes(String(q.provider)) || src?.amount !== raw || !sameToken(src.contract, input.contract) || !sameToken(dst?.contract, output.contract) ||
-        dst?.decimals !== output.decimals) throw Error('The response did not match the selected route and amount.')
+        !providerMatches || src?.amount !== raw || !sameToken(src.contract ?? (input.chain === 'fiat' ? src.symbol : undefined), input.contract) || !sameToken(dst?.contract ?? (output.chain === 'fiat' ? dst?.symbol : undefined), output.contract) ||
+        src.decimals !== input.decimals || dst?.decimals !== output.decimals) throw Error('The response did not match the selected route and amount.')
       if (bound && ((input.chain !== 'fiat' && !sameToken(q.originAddress, sender)) || (output.chain !== 'fiat' && !sameToken(q.destinationAddress, recipient)))) throw Error('The response did not match the selected wallet addresses.')
       if (row.provider !== 'pods' && q.rampProvider && q.rampProvider !== row.provider) throw Error('The response used a different ramp provider.')
       const instructions = asRecord(body?.paymentInstructions)

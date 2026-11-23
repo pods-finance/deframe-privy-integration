@@ -1,14 +1,9 @@
 {
-  "revision": "c949c3a670766a1ece9b43d7a88f28a3930ef64c",
+  "revision": "57c7a744db95ff8282b3e35b34b3984d1456ba8f",
   "assets": {
     "arbitrum/USDC": {
       "chain": "arbitrum",
       "contract": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-      "decimals": 6
-    },
-    "arbitrum/thBill": {
-      "chain": "arbitrum",
-      "contract": "0xfDD22Ce6D1F66bc0Ec89b20BF16CcB6670F55A5a",
       "decimals": 6
     },
     "avalanche/USDC": {
@@ -76,11 +71,6 @@
       "contract": "0xFECB3F7c54E2CAAE9dC6Ac9060A822D47E053760",
       "decimals": 18
     },
-    "gnosis/OC-sDAI": {
-      "chain": "gnosis",
-      "contract": "0x0AC34fe133BdE3A2eF589a18A4E10b6a7d253829",
-      "decimals": 18
-    },
     "gnosis/USDC": {
       "chain": "gnosis",
       "contract": "0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0",
@@ -143,7 +133,6 @@
     }
   },
   "selections": [
-    "arbitrum/USDC arbitrum/thBill pods -",
     "arbitrum/USDC base/USDC pods -",
     "arbitrum/USDC bsc/USDC pods -",
     "arbitrum/USDC celo/USDC pods -",
@@ -151,7 +140,6 @@
     "arbitrum/USDC gnosis/USDC pods -",
     "arbitrum/USDC monad/USDC pods -",
     "arbitrum/USDC polygon/USDC pods -",
-    "arbitrum/thBill arbitrum/USDC pods -",
     "base/BRLA base/BRS pods -",
     "base/BRLA ethereum/BRS pods -",
     "base/BRLA fiat/BRL avenia PIX",
@@ -239,14 +227,12 @@
     "gnosis/BRLA gnosis/USDC pods -",
     "gnosis/BRLA polygon/BRS pods -",
     "gnosis/BRLA solana/BRS pods -",
-    "gnosis/OC-sDAI gnosis/USDC pods -",
     "gnosis/USDC arbitrum/USDC pods -",
     "gnosis/USDC base/BRS pods -",
     "gnosis/USDC base/USDC pods -",
     "gnosis/USDC bsc/USDC pods -",
     "gnosis/USDC celo/USDC pods -",
     "gnosis/USDC gnosis/BRLA pods -",
-    "gnosis/USDC gnosis/OC-sDAI pods -",
     "gnosis/USDC monad/USDC pods -",
     "gnosis/USDC polygon/BRLA pods -",
     "gnosis/USDC polygon/USDC pods -",

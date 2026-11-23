@@ -72,7 +72,7 @@ export default function Preview3364() {
   }
   return <main className="ui-page ui-surface-warm min-h-screen py-10">
     <section className="ui-container flex flex-col gap-5">
-      <nav aria-label="Preview tools" className="flex gap-2"><a className="ui-btn-tab" href="/pr-3500">USD → BRL quotes</a><a className="ui-btn-tab" href="/pr-3500/forward">BRL → USD quotes</a><a className="ui-btn-tab" href={`/pr-${pr}/swap`}>Bridge swap</a><a className="ui-btn-tab" href="/pr-3500/pix">Pix ramps</a><a className="ui-btn-tab" href="/pr-3500/ramp">Ramp catalog</a><a className="ui-btn-tab" href="/pr-3500/custom">Custom swap</a></nav>
+      <nav aria-label="Preview tools" className="flex gap-2"><a className="ui-btn-tab" href="/pr-3500/catalog">Route tester</a><a className="ui-btn-tab" href="/pr-3500">USD → BRL quotes</a><a className="ui-btn-tab" href="/pr-3500/forward">BRL → USD quotes</a><a className="ui-btn-tab" href={`/pr-${pr}/swap`}>Bridge swap</a><a className="ui-btn-tab" href="/pr-3500/pix">Pix ramps</a><a className="ui-btn-tab" href="/pr-3500/ramp">Ramp catalog</a><a className="ui-btn-tab" href="/pr-3500/custom">Custom swap</a></nav>
       <h1 className="ui-heading-section">{reverse ? 'USD → BRL' : 'BRL → USD'} preview quotes</h1>
       {reverse ? <p>PR #3500 · Each quote uses 2 units of the input token.</p> : <><p>PR #3500 · One unit per input. Each click requests a fresh five-minute quote. Pix can return unpaid payment instructions.</p>
       <label>Pix destination wallet (BRL KYC)

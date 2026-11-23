@@ -1,0 +1,304 @@
+{
+  "revision": "d63d52f8478ea4f5f3a763aa6a5d91f8fcaa00ce",
+  "assets": {
+    "arbitrum/USDC": {
+      "chain": "arbitrum",
+      "contract": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "decimals": 6
+    },
+    "arbitrum/thBill": {
+      "chain": "arbitrum",
+      "contract": "0xfDD22Ce6D1F66bc0Ec89b20BF16CcB6670F55A5a",
+      "decimals": 6
+    },
+    "avalanche/USDC": {
+      "chain": "avalanche",
+      "contract": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+      "decimals": 6
+    },
+    "base/BRLA": {
+      "chain": "base",
+      "contract": "0xfCB34c47f850f452C15EA1B84d51231C38A61783",
+      "decimals": 18
+    },
+    "base/BRS": {
+      "chain": "base",
+      "contract": "0x0000006238e3C7797Ae71827da303560bae1B125",
+      "decimals": 6
+    },
+    "base/USDC": {
+      "chain": "base",
+      "contract": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "decimals": 6
+    },
+    "bsc/USDC": {
+      "chain": "bsc",
+      "contract": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+      "decimals": 18
+    },
+    "celo/USDC": {
+      "chain": "celo",
+      "contract": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+      "decimals": 6
+    },
+    "ethereum/BRLA": {
+      "chain": "ethereum",
+      "contract": "0xfCB34c47f850f452C15EA1B84d51231C38A61783",
+      "decimals": 18
+    },
+    "ethereum/BRS": {
+      "chain": "ethereum",
+      "contract": "0x0000006238e3C7797Ae71827da303560bae1B125",
+      "decimals": 6
+    },
+    "ethereum/USDC": {
+      "chain": "ethereum",
+      "contract": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "decimals": 6
+    },
+    "ethereum/tBRL": {
+      "chain": "ethereum",
+      "contract": "0x4C1b46adb8877E389171EC6Ef67b385094C0afaD",
+      "decimals": 18
+    },
+    "fiat/BRL": {
+      "chain": "fiat",
+      "contract": "BRL",
+      "decimals": 2
+    },
+    "fiat/USD": {
+      "chain": "fiat",
+      "contract": "USD",
+      "decimals": 2
+    },
+    "gnosis/BRLA": {
+      "chain": "gnosis",
+      "contract": "0xFECB3F7c54E2CAAE9dC6Ac9060A822D47E053760",
+      "decimals": 18
+    },
+    "gnosis/OC-sDAI": {
+      "chain": "gnosis",
+      "contract": "0x0AC34fe133BdE3A2eF589a18A4E10b6a7d253829",
+      "decimals": 18
+    },
+    "gnosis/USDC": {
+      "chain": "gnosis",
+      "contract": "0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0",
+      "decimals": 6
+    },
+    "monad/USDC": {
+      "chain": "monad",
+      "contract": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+      "decimals": 6
+    },
+    "optimism/USDC": {
+      "chain": "optimism",
+      "contract": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      "decimals": 6
+    },
+    "polygon/BRLA": {
+      "chain": "polygon",
+      "contract": "0xE6A537a407488807F0bbeb0038B79004f19DDDFb",
+      "decimals": 18
+    },
+    "polygon/BRS": {
+      "chain": "polygon",
+      "contract": "0x0000006238e3C7797Ae71827da303560bae1B125",
+      "decimals": 6
+    },
+    "polygon/BRZ": {
+      "chain": "polygon",
+      "contract": "0x4eD141110F6EeeAbA9A1df36d8c26f684d2475Dc",
+      "decimals": 18
+    },
+    "polygon/USDC": {
+      "chain": "polygon",
+      "contract": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "decimals": 6
+    },
+    "polygon/wMXN": {
+      "chain": "polygon",
+      "contract": "0x337e7456b420bd3481e7fa61fa9850343d610d34",
+      "decimals": 18
+    },
+    "solana/BRS": {
+      "chain": "solana",
+      "contract": "BRSxQRUaGswjLs7ewcH7uXj3r7SgmfKSSLLXyCKHZtUo",
+      "decimals": 6
+    },
+    "solana/USDC": {
+      "chain": "solana",
+      "contract": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "decimals": 6
+    },
+    "stable/USDT0": {
+      "chain": "stable",
+      "contract": "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+      "decimals": 6
+    },
+    "stellar/USDC": {
+      "chain": "stellar",
+      "contract": "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+      "decimals": 7
+    }
+  },
+  "selections": [
+    "arbitrum/USDC arbitrum/thBill pods -",
+    "arbitrum/USDC base/USDC pods -",
+    "arbitrum/USDC bsc/USDC pods -",
+    "arbitrum/USDC celo/USDC pods -",
+    "arbitrum/USDC fiat/BRL avenia PIX",
+    "arbitrum/USDC gnosis/USDC pods -",
+    "arbitrum/USDC monad/USDC pods -",
+    "arbitrum/USDC polygon/USDC pods -",
+    "arbitrum/thBill arbitrum/USDC pods -",
+    "base/BRLA base/BRS pods -",
+    "base/BRLA ethereum/BRS pods -",
+    "base/BRLA fiat/BRL avenia PIX",
+    "base/BRLA polygon/BRS pods -",
+    "base/BRLA solana/BRS pods -",
+    "base/BRS base/BRLA pods -",
+    "base/BRS fiat/BRL avenia PIX",
+    "base/BRS gnosis/BRLA pods -",
+    "base/BRS gnosis/USDC pods -",
+    "base/BRS polygon/BRLA pods -",
+    "base/BRS stable/USDT0 pods -",
+    "base/USDC arbitrum/USDC pods -",
+    "base/USDC bsc/USDC pods -",
+    "base/USDC celo/USDC pods -",
+    "base/USDC fiat/BRL avenia PIX",
+    "base/USDC fiat/BRL unblockpay PIX",
+    "base/USDC fiat/USD avenia ACH",
+    "base/USDC fiat/USD avenia WIRE",
+    "base/USDC fiat/USD unblockpay WIRE",
+    "base/USDC gnosis/USDC pods -",
+    "base/USDC monad/USDC pods -",
+    "base/USDC polygon/BRLA pods -",
+    "base/USDC polygon/USDC pods -",
+    "bsc/USDC arbitrum/USDC pods -",
+    "bsc/USDC base/USDC pods -",
+    "bsc/USDC celo/USDC pods -",
+    "bsc/USDC fiat/BRL avenia PIX",
+    "bsc/USDC gnosis/USDC pods -",
+    "bsc/USDC monad/USDC pods -",
+    "bsc/USDC polygon/USDC pods -",
+    "celo/USDC arbitrum/USDC pods -",
+    "celo/USDC base/USDC pods -",
+    "celo/USDC bsc/USDC pods -",
+    "celo/USDC fiat/BRL avenia PIX",
+    "celo/USDC gnosis/USDC pods -",
+    "celo/USDC monad/USDC pods -",
+    "celo/USDC polygon/USDC pods -",
+    "ethereum/BRLA ethereum/USDC pods -",
+    "ethereum/BRS base/BRLA pods -",
+    "ethereum/BRS fiat/BRL avenia PIX",
+    "ethereum/BRS gnosis/BRLA pods -",
+    "ethereum/BRS polygon/BRLA pods -",
+    "ethereum/USDC ethereum/BRLA pods -",
+    "ethereum/USDC fiat/BRL avenia PIX",
+    "ethereum/USDC fiat/BRL unblockpay PIX",
+    "ethereum/USDC fiat/USD avenia ACH",
+    "ethereum/USDC fiat/USD avenia WIRE",
+    "ethereum/USDC fiat/USD unblockpay WIRE",
+    "ethereum/tBRL fiat/BRL avenia PIX",
+    "fiat/BRL arbitrum/USDC avenia PIX",
+    "fiat/BRL base/BRLA avenia PIX",
+    "fiat/BRL base/BRS avenia PIX",
+    "fiat/BRL base/USDC avenia PIX",
+    "fiat/BRL base/USDC unblockpay PIX",
+    "fiat/BRL bsc/USDC avenia PIX",
+    "fiat/BRL celo/USDC avenia PIX",
+    "fiat/BRL ethereum/BRS avenia PIX",
+    "fiat/BRL ethereum/USDC avenia PIX",
+    "fiat/BRL ethereum/USDC unblockpay PIX",
+    "fiat/BRL ethereum/tBRL avenia PIX",
+    "fiat/BRL gnosis/BRLA avenia PIX",
+    "fiat/BRL gnosis/USDC avenia PIX",
+    "fiat/BRL monad/USDC avenia PIX",
+    "fiat/BRL polygon/BRLA avenia PIX",
+    "fiat/BRL polygon/BRS avenia PIX",
+    "fiat/BRL polygon/BRZ avenia PIX",
+    "fiat/BRL polygon/USDC avenia PIX",
+    "fiat/BRL polygon/USDC unblockpay PIX",
+    "fiat/BRL solana/BRS avenia PIX",
+    "fiat/BRL solana/USDC avenia PIX",
+    "fiat/BRL stable/USDT0 avenia PIX",
+    "fiat/BRL stellar/USDC avenia PIX",
+    "fiat/USD base/USDC avenia ACH",
+    "fiat/USD base/USDC avenia WIRE",
+    "fiat/USD base/USDC unblockpay WIRE",
+    "fiat/USD ethereum/USDC avenia ACH",
+    "fiat/USD ethereum/USDC avenia WIRE",
+    "fiat/USD ethereum/USDC unblockpay WIRE",
+    "fiat/USD polygon/USDC avenia ACH",
+    "fiat/USD polygon/USDC avenia WIRE",
+    "fiat/USD polygon/USDC unblockpay WIRE",
+    "gnosis/BRLA base/BRS pods -",
+    "gnosis/BRLA ethereum/BRS pods -",
+    "gnosis/BRLA fiat/BRL avenia PIX",
+    "gnosis/BRLA gnosis/USDC pods -",
+    "gnosis/BRLA polygon/BRS pods -",
+    "gnosis/BRLA solana/BRS pods -",
+    "gnosis/OC-sDAI gnosis/USDC pods -",
+    "gnosis/USDC arbitrum/USDC pods -",
+    "gnosis/USDC base/BRS pods -",
+    "gnosis/USDC base/USDC pods -",
+    "gnosis/USDC bsc/USDC pods -",
+    "gnosis/USDC celo/USDC pods -",
+    "gnosis/USDC gnosis/BRLA pods -",
+    "gnosis/USDC gnosis/OC-sDAI pods -",
+    "gnosis/USDC monad/USDC pods -",
+    "gnosis/USDC polygon/BRLA pods -",
+    "gnosis/USDC polygon/USDC pods -",
+    "gnosis/USDC polygon/wMXN pods -",
+    "monad/USDC arbitrum/USDC pods -",
+    "monad/USDC base/USDC pods -",
+    "monad/USDC bsc/USDC pods -",
+    "monad/USDC celo/USDC pods -",
+    "monad/USDC fiat/BRL avenia PIX",
+    "monad/USDC gnosis/USDC pods -",
+    "monad/USDC polygon/USDC pods -",
+    "polygon/BRLA base/BRS pods -",
+    "polygon/BRLA base/USDC pods -",
+    "polygon/BRLA ethereum/BRS pods -",
+    "polygon/BRLA fiat/BRL avenia PIX",
+    "polygon/BRLA gnosis/USDC pods -",
+    "polygon/BRLA polygon/BRS pods -",
+    "polygon/BRLA solana/BRS pods -",
+    "polygon/BRLA stable/USDT0 pods -",
+    "polygon/BRS base/BRLA pods -",
+    "polygon/BRS fiat/BRL avenia PIX",
+    "polygon/BRS gnosis/BRLA pods -",
+    "polygon/BRS polygon/BRLA pods -",
+    "polygon/BRZ fiat/BRL avenia PIX",
+    "polygon/USDC arbitrum/USDC pods -",
+    "polygon/USDC base/USDC pods -",
+    "polygon/USDC bsc/USDC pods -",
+    "polygon/USDC celo/USDC pods -",
+    "polygon/USDC fiat/BRL avenia PIX",
+    "polygon/USDC fiat/BRL unblockpay PIX",
+    "polygon/USDC fiat/USD avenia ACH",
+    "polygon/USDC fiat/USD avenia WIRE",
+    "polygon/USDC fiat/USD unblockpay WIRE",
+    "polygon/USDC gnosis/USDC pods -",
+    "polygon/USDC monad/USDC pods -",
+    "polygon/wMXN gnosis/USDC pods -",
+    "solana/BRS base/BRLA pods -",
+    "solana/BRS fiat/BRL avenia PIX",
+    "solana/BRS gnosis/BRLA pods -",
+    "solana/BRS polygon/BRLA pods -",
+    "solana/USDC fiat/BRL avenia PIX",
+    "stable/USDT0 base/BRS pods -",
+    "stable/USDT0 fiat/BRL avenia PIX",
+    "stable/USDT0 polygon/BRLA pods -",
+    "stellar/USDC arbitrum/USDC pods -",
+    "stellar/USDC avalanche/USDC pods -",
+    "stellar/USDC base/USDC pods -",
+    "stellar/USDC ethereum/USDC pods -",
+    "stellar/USDC fiat/BRL avenia PIX",
+    "stellar/USDC monad/USDC pods -",
+    "stellar/USDC optimism/USDC pods -",
+    "stellar/USDC polygon/USDC pods -",
+    "stellar/USDC solana/USDC pods -"
+  ]
+}

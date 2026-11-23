@@ -118,7 +118,7 @@ const YourApp = () => {
             Hello {user?.email?.address ?? 'User'}
           </p>
           <nav className="flex flex-wrap items-center gap-2">
-            <a className="ui-btn-tab ui-btn-tab-inverse" href="/pr-3500">#3500 quotes</a>
+            <a className="ui-btn-tab ui-btn-tab-inverse" href="/pr-3500/catalog">Route tester</a>
             {TABS.map(({ id, label }) => (
               <button
                 key={id}

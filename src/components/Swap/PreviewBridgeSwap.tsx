@@ -47,9 +47,12 @@ async function prepare(route: typeof routes[number], amount: string, sender: str
 
 function SwapForm({ wallet }: { wallet: string }) {
   const { getClientForChain } = useSmartWallets()
-  const [index, setIndex] = useState(0)
-  const [amount, setAmount] = useState('1')
-  const [recipient, setRecipient] = useState(wallet)
+  const entry = new URLSearchParams(window.location.search)
+  const [index, setIndex] = useState(() => Math.max(0, routes.findIndex(({ from, to }) => from.chain + '/' + from.symbol === entry.get('from') && to.chain + '/' + to.symbol === entry.get('to'))))
+  const [amount, setAmount] = useState(entry.get('amount') ?? '1')
+  const requestedRecipient = entry.get('recipient')
+  const initialRecipient = requestedRecipient?.toLowerCase() === PIX_TEST_SAFE.toLowerCase() ? PIX_TEST_SAFE : requestedRecipient && isAddress(requestedRecipient) && requestedRecipient.toLowerCase() !== wallet.toLowerCase() ? requestedRecipient : wallet
+  const [recipient, setRecipient] = useState(initialRecipient)
   const [quote, setQuote] = useState<Awaited<ReturnType<typeof prepare>>>()
   const [busy, setBusy] = useState(false)
   const [expired, setExpired] = useState(false)
@@ -95,6 +98,7 @@ function SwapForm({ wallet }: { wallet: string }) {
       <label className="ui-label">Amount ({route.from.symbol})<input className="ui-input" inputMode="decimal" value={amount} onChange={e => { setAmount(e.target.value); }} /></label>
       <p className="break-all">Funding wallet: {wallet}</p>
       <label className="ui-label">Receive on {route.to.chain}<select className="ui-select" value={recipient} onChange={e => { setRecipient(e.target.value); }}>
+        {initialRecipient.toLowerCase() !== wallet.toLowerCase() && initialRecipient.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={initialRecipient}>Selected recipient · {initialRecipient}</option>}
         <option value={wallet}>My Privy wallet · {wallet}</option>
         {wallet.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={PIX_TEST_SAFE}>Test Safe · {PIX_TEST_SAFE}</option>}
       </select></label>

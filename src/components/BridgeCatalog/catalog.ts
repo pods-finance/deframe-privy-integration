@@ -13,10 +13,12 @@ function family(from: string, to: string, provider: string) {
   if (from === 'stellar/USDC') return 'Stellar CCTP'
   if (provider === 'cctp') return 'Circle CCTP'
   const tokens = ends.map(key => key.split('/')[1])
+  const isReal = (token: string) => ['BRLA', 'BRS', 'BRZ', 'tBRL'].includes(token)
+  const isDollar = (token: string) => token === 'USDC' || token === 'USDT0'
   if (tokens.every(token => token === 'USDC')) return 'USDC inventory'
-  if (tokens.every(token => token === 'BRLA' || token === 'BRS')) return 'BRL token parity'
-  if (tokens.every(token => token === 'USDC' || token === 'USDT0')) return 'USD token parity'
-  if (tokens.includes('BRLA') || tokens.includes('BRS')) return 'BRL ↔ USD tokens'
+  if (tokens.every(isReal)) return 'BRL token parity'
+  if (tokens.every(isDollar)) return 'USD token parity'
+  if (tokens.some(isReal) && tokens.some(isDollar)) return 'BRL ↔ USD tokens'
   return 'Specialist markets'
 }
 

@@ -90,12 +90,13 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
       const src = asRecord(q?.tokenIn), dst = asRecord(q?.tokenOut)
       const net = readString(dst?.amount)
       const id = readString(q?.quoteId) ?? readString(q?.id)
-      const providerMatches = ['pods', 'deframe'].includes(String(q?.provider)) || (row.provider !== 'pods' && q?.provider === row.provider)
+      const expectedProvider = row.rampProvider ?? row.swapProvider
+      const providerMatches = q?.provider === expectedProvider || (expectedProvider === 'pods' && q?.provider === 'deframe')
       if (!id || !net || !/^\d+$/.test(net) || !BigInt(net) || q?.originChain !== input.chain || q.destinationChain !== output.chain ||
         !providerMatches || src?.amount !== raw || !sameToken(src.contract ?? (input.chain === 'fiat' ? src.symbol : undefined), input.contract) || !sameToken(dst?.contract ?? (output.chain === 'fiat' ? dst?.symbol : undefined), output.contract) ||
         src.decimals !== input.decimals || dst?.decimals !== output.decimals) throw Error('The response did not match the selected route and amount.')
       if (bound && ((input.chain !== 'fiat' && !sameToken(q.originAddress, sender)) || (output.chain !== 'fiat' && !sameToken(q.destinationAddress, recipient)))) throw Error('The response did not match the selected wallet addresses.')
-      if (row.provider !== 'pods' && q.rampProvider && q.rampProvider !== row.provider) throw Error('The response used a different ramp provider.')
+      if (row.rampProvider && q.rampProvider && q.rampProvider !== row.rampProvider) throw Error('The response used a different ramp provider.')
       const instructions = asRecord(body?.paymentInstructions)
       const expires = activeDeadline(q.deadline, readString(instructions?.expiresAt))
       // These four routes explicitly support a plain ERC-20 deposit from the external wallet.
@@ -114,7 +115,7 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
     <fieldset disabled={busy} className="flex flex-col gap-4">
       <label className="ui-label">Amount in {label(row.from)}<input className="ui-input w-full" inputMode="decimal" value={amount} onChange={e => { clear(); setAmount(e.target.value) }} /></label>
       <label><input type="checkbox" checked={bound} onChange={e => { clear(); setBound(e.target.checked) }} /> Include wallet details for this quote</label>
-      {row.provider !== 'pods' && <p>For a customer-specific ramp quote, include a wallet approved for this currency. The provider may return payment instructions.</p>}
+      {row.rampProvider && <p>For a customer-specific ramp quote, include a wallet approved for this currency. The provider may return payment instructions.</p>}
       {bound && <>
         <WalletField chain={input.chain} title="Sender" value={sender} change={v => { clear(); setSender(v) }} />
         <WalletField chain={output.chain} title="Recipient" value={recipient} change={v => { clear(); setRecipient(v) }} />

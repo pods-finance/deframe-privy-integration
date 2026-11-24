@@ -8,6 +8,7 @@ const unique = (values: string[]) => [...new Set(values)].sort()
 const families = unique(selections.map(s => s.family))
 const initial = selections.find(s => s.from === 'gnosis/USDC' && s.to === 'polygon/BRLA') ?? selections[0]
 function optionLabel(s: Selection) {
+  if (s.swapProvider === 'cctp') return 'Circle CCTP'
   return s.provider === 'pods' ? 'Pods' : (s.provider === 'avenia' ? 'Avenia' : 'UnblockPay') + ' · ' + s.method
 }
 

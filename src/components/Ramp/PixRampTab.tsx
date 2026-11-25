@@ -130,8 +130,9 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
           }}>
             {privyWallet && privyWallet.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={privyWallet}>My Privy wallet ({privyWallet.slice(0, 6)}…{privyWallet.slice(-4)})</option>}
             <option value={PIX_TEST_SAFE}>Test Safe (0xBDFf…210a)</option>
-            <option value={pixNativeWallets.solana}>My Solana wallet (8wyq…H2hT)</option>
-            <option value={pixNativeWallets.stellar}>My Stellar wallet (GBIB…OR5M)</option>
+            {Object.entries(pixNativeWallets).map(([network, address]) => <option key={network} value={address}>
+              My {network === 'solana' ? 'Solana' : 'Stellar'} wallet ({address.slice(0, 4)}…{address.slice(-4)})
+            </option>)}
           </select>
         </label>
         <label className="ui-label">{onramp ? 'Destination asset and chain' : 'Origin asset and chain'}

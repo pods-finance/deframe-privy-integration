@@ -4,8 +4,8 @@ import { assets } from '../BridgeCatalog/catalog'
 
 export const PIX_TEST_SAFE = '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'
 export const pixNativeWallets = {
-  solana: '8wyqJTZkeqFD7Fu7Noc2NAHcepbMHca8apcxq37tH2hT',
-  stellar: 'GBIBNJ7ABD6GHO6DCBW47RGPKGO3ZFXO4Y4AIMD5M3P4HL2BQ6USOR5M',
+  solana: 'EDGGGTA5Ee5Dv7bncqt6ry2SRKaQmJ72BzVZVP3QYSLm',
+  stellar: 'GC5UWH5EQEH2IAZNNPGIQFLQ3TRGDIWQO5K57VADURTLGJESRGZTAPRF',
 } as const
 
 function pixAsset(chain: string, symbol: string, offramp = true) {

@@ -1,34 +1,48 @@
 import { useEffect, useRef, useState } from 'react'
-import { useConnectWallet, usePrivy } from '@privy-io/react-auth'
+import { useConnectWallet, usePrivy, useWallets as useEvmWallets } from '@privy-io/react-auth'
 import { useSignRawHash } from '@privy-io/react-auth/extended-chains'
 import { useSignAndSendTransaction, useWallets } from '@privy-io/react-auth/solana'
 import { getBase58Decoder } from '@solana/kit'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { QRCode } from 'react-qr-code'
-import { isAddress } from 'viem'
+import { createWalletClient, custom, isAddress } from 'viem'
 import { humanToRaw } from './rampRoutes'
 import { getPixQuote, pixAssets, pixNativeWallets, PIX_TEST_SAFE } from './pixQuote'
 
 function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: string }) {
-  const [evmWallet, setEvmWallet] = useState(privyWallet ?? PIX_TEST_SAFE)
+  const [evmWallet, setEvmWallet] = useState(onramp ? privyWallet ?? PIX_TEST_SAFE : PIX_TEST_SAFE)
   const assets = pixAssets.filter(a => onramp || a.offramp)
   const [asset, setAsset] = useState(assets[0])
   const wallet = asset.walletNetwork === 'evm' ? evmWallet : pixNativeWallets[asset.walletNetwork]
   const [amount, setAmount] = useState('1')
   const [pixKey, setPixKey] = useState('')
-  const needsDeposit = !onramp && asset.walletNetwork !== 'evm'
+  const needsDeposit = !onramp
+  const evmOfframp = !onramp && asset.walletNetwork === 'evm'
+  const { wallets: evmWallets } = useEvmWallets()
+  const { getClientForChain } = useSmartWallets()
   const [connectedStellar, setConnectedStellar] = useState('')
   const { wallets } = useWallets()
   const signer = wallets.find(w => w.address === wallet)
   const { connectWallet } = useConnectWallet()
   const solana = useSignAndSendTransaction()
   const sending = useRef(false)
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
   const [signature, setSignature] = useState('')
   const [result, setResult] = useState<Awaited<ReturnType<typeof getPixQuote>>>()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [expired, setExpired] = useState(false)
+  const { connectWallet: connectEvm } = useConnectWallet({ onSuccess: ({ wallet: connected }) => {
+    if (!isAddress(connected.address)) return
+    if (result?.evmDeposit && connected.address.toLowerCase() !== result.evmDeposit.wallet.toLowerCase()) {
+      setError('This quote belongs to a different funding wallet. Select New quote to pay from the connected wallet.')
+    } else if (!result && !busy) setEvmWallet(connected.address)
+  } })
   const { user } = usePrivy()
   const stellarSigning = useSignRawHash()
   const [trustlineReady, setTrustlineReady] = useState(false)
@@ -77,6 +91,38 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
   }
   const code = result?.code
   const stellarDeposit = result?.stellarDeposit
+  const evmDeposit = result?.evmDeposit
+  const connectedFundingWallet = evmWallets.find(w => w.address.toLowerCase() === evmDeposit?.wallet.toLowerCase())
+  const smartFundingWallet = Boolean(evmDeposit && privyWallet?.toLowerCase() === evmDeposit.wallet.toLowerCase())
+  async function payEvm() {
+    if (!result || !evmDeposit || sending.current || signature || Date.now() >= result.expires) return
+    const { chain, call, wallet: account } = evmDeposit
+    const assertCurrent = () => {
+      if (!mounted.current) throw Error('The payment form was closed.')
+      if (Date.now() >= result.expires) throw Error('Quote expired. Request a fresh quote.')
+    }
+    sending.current = true
+    setBusy(true); setError('')
+    try {
+      if (smartFundingWallet) {
+        const client = await getClientForChain({ id: chain.id })
+        if (client?.account.address.toLowerCase() !== account.toLowerCase() || await client.getChainId() !== chain.id) throw Error('Reconnect the quoted smart wallet on ' + chain.name + '.')
+        assertCurrent()
+        setSignature(await client.sendTransaction({ calls: [call] }))
+      } else {
+        if (!connectedFundingWallet) throw Error('Connect the wallet shown as the funding wallet.')
+        await connectedFundingWallet.switchChain(chain.id)
+        const provider = await connectedFundingWallet.getEthereumProvider()
+        const client = createWalletClient({ chain, transport: custom(provider) })
+        const [accounts, currentChain] = await Promise.all([client.getAddresses(), client.getChainId()])
+        if (currentChain !== chain.id || accounts[0]?.toLowerCase() !== account.toLowerCase()) throw Error('Select the quoted funding account on ' + chain.name + '.')
+        assertCurrent()
+        setSignature(await client.sendTransaction({ ...call, account }))
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Submission could not be confirmed. Check your wallet activity before retrying.')
+    } finally { sending.current = false; setBusy(false) }
+  }
   async function stellarPayment() {
     if (!result?.stellarDeposit || sending.current || signature || Date.now() >= result.expires) return
     sending.current = true
@@ -137,9 +183,20 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
         <p>Pix key: {pixKey}</p>
         <p className="text-sm">Use the payment button below. Pasting this token account into a wallet’s Send screen can send funds to the wrong account and leave the Pix payout unpaid. The prepared payment includes quote tracking and requires SOL for the fee.</p>
       </div>}
-      {signature ? <p role="status">Submitted on {result.stellarDeposit ? 'Stellar' : 'Solana'}. <a href={(result.stellarDeposit ? 'https://stellar.expert/explorer/public/tx/' : 'https://solscan.io/tx/') + signature} target="_blank" rel="noreferrer">View transaction</a></p>
+      {signature ? <p role="status">Submitted on {evmDeposit?.chain.name ?? (result.stellarDeposit ? 'Stellar' : 'Solana')}. <a href={(evmDeposit ? evmDeposit.chain.blockExplorers.default.url + '/tx/' : result.stellarDeposit ? 'https://stellar.expert/explorer/public/tx/' : 'https://solscan.io/tx/') + signature} target="_blank" rel="noreferrer">View transaction</a></p>
       : expired ? <p role="status">Quote expired. Generate a new quote.</p> : <>
         <p>Valid until {new Date(result.expires).toLocaleTimeString()}.</p>
+        {evmDeposit && <>
+          <p>Pix key: {pixKey}</p>
+          <div><p className="ui-label">{evmDeposit.chain.name} deposit address</p>
+            <p className="break-all select-all font-mono">{evmDeposit.address}</p>
+            <p>Send exactly {normalized} {asset.symbol} on {evmDeposit.chain.name} from the funding wallet shown above.</p>
+          </div>
+          <button className="ui-btn-secondary" onClick={() => { void navigator.clipboard.writeText(evmDeposit.address).then(() => { setCopied(true) }).catch(() => { setError('Select the deposit address above to copy it.') }) }}>{copied ? 'Address copied' : 'Copy deposit address'}</button>
+          {connectedFundingWallet || smartFundingWallet
+            ? <button className="ui-btn-primary" disabled={busy} onClick={() => { void payEvm() }}>{busy ? 'Waiting for wallet…' : 'Pay ' + normalized + ' ' + asset.symbol + ' with wallet'}</button>
+            : <button className="ui-btn-secondary" onClick={() => { connectEvm({ walletChainType: 'ethereum-only' }) }}>Connect quoted funding wallet</button>}
+        </>}
         {stellarDeposit && <>
           <p>Pix key: {pixKey}</p>
           <button disabled={busy} className="ui-btn-primary" onClick={() => { void stellarPayment() }}>
@@ -181,11 +238,14 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
           }}>
             {privyWallet && privyWallet.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={privyWallet}>My Privy wallet ({privyWallet.slice(0, 6)}…{privyWallet.slice(-4)})</option>}
             <option value={PIX_TEST_SAFE}>Test Safe (0xBDFf…210a)</option>
+            {(!onramp ? evmWallets : []).filter(w => ![privyWallet?.toLowerCase(), PIX_TEST_SAFE.toLowerCase()].includes(w.address.toLowerCase())).map(w =>
+              <option key={w.address} value={w.address}>Connected wallet ({w.address.slice(0, 6)}…{w.address.slice(-4)})</option>)}
             {Object.entries(pixNativeWallets).map(([network, address]) => <option key={network} value={address}>
               My {network === 'solana' ? 'Solana' : 'Stellar'} wallet ({address.slice(0, 4)}…{address.slice(-4)})
             </option>)}
           </select>
         </label>
+        {evmOfframp && <button type="button" className="ui-btn-secondary" onClick={() => { connectEvm({ walletChainType: 'ethereum-only' }) }}>Connect a funding wallet</button>}
         <label className="ui-label">{onramp ? 'Destination asset and chain' : 'Origin asset and chain'}
           <select className="ui-select mt-1" value={asset.label} onChange={e => {
             const nextAsset = assets.find(a => a.label === e.target.value)

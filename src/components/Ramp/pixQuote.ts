@@ -1,6 +1,7 @@
 import { formatUnits } from 'viem'
 import { asRecord, deframeApiHeaders, deframeApiUrl, parseResponseBody, readString } from './rampApi'
 import { assets } from '../BridgeCatalog/catalog'
+import { readEvmPixDeposit } from './evmPixDeposit'
 
 export const PIX_TEST_SAFE = '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'
 export const pixNativeWallets = {
@@ -28,10 +29,10 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
     destinationChain: onramp ? asset.chain : 'fiat', tokenOut: onramp ? asset.token : 'BRL',
     [onramp ? 'destinationAddress' : 'originAddress']: wallet,
   })
-  if (asset.walletNetwork !== 'evm') params.set('rampProvider', 'avenia')
+  if (!onramp || asset.walletNetwork !== 'evm') params.set('rampProvider', 'avenia')
   const prepareSolana = !onramp && asset.walletNetwork === 'solana'
   const prepareStellar = !onramp && asset.walletNetwork === 'stellar'
-  if (prepareSolana || prepareStellar) {
+  if (!onramp) {
     if (!pixKey?.trim()) throw Error('Enter the Pix key that will receive the payout.')
     params.set('pixKey', pixKey.trim())
   }
@@ -70,5 +71,7 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
     const { readSolanaPixDeposit } = await import('./solanaPixDeposit')
     deposit = readSolanaPixDeposit(encoded, wallet, asset.token, amountIn, quoteId)
   }
-  return { credit: formatUnits(BigInt(amount), onramp ? asset.decimals : 2) + ' ' + symbol, expires, code, deposit, stellarDeposit }
+  const evmDeposit = !onramp && asset.walletNetwork === 'evm' && body
+    ? readEvmPixDeposit(body, asset.chain, asset.token, wallet, amountIn) : undefined
+  return { credit: formatUnits(BigInt(amount), onramp ? asset.decimals : 2) + ' ' + symbol, expires, code, deposit, stellarDeposit, evmDeposit }
 }

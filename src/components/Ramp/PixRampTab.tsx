@@ -16,7 +16,8 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
   const wallet = asset.walletNetwork === 'evm' ? evmWallet : pixNativeWallets[asset.walletNetwork]
   const [amount, setAmount] = useState('1')
   const [pixKey, setPixKey] = useState('')
-  const needsDeposit = !onramp && asset.walletNetwork === 'solana'
+  const needsDeposit = !onramp && asset.walletNetwork !== 'evm'
+  const [connectedStellar, setConnectedStellar] = useState('')
   const { wallets } = useWallets()
   const signer = wallets.find(w => w.address === wallet)
   const { connectWallet } = useConnectWallet()
@@ -75,6 +76,40 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
     finally { setBusy(false) }
   }
   const code = result?.code
+  const stellarDeposit = result?.stellarDeposit
+  async function stellarPayment() {
+    if (!result?.stellarDeposit || sending.current || signature || Date.now() >= result.expires) return
+    sending.current = true
+    setBusy(true); setError('')
+    try {
+      const { connectStellarFundingWallet, payWithFreighter } = await import('./stellarPixDeposit')
+      if (!ownsStellar && connectedStellar !== wallet) {
+        await connectStellarFundingWallet(wallet)
+        setConnectedStellar(wallet)
+        return
+      }
+      const { xdr } = result.stellarDeposit
+      if (ownsStellar) {
+        const { executeStellarBytecode } = await import('../Strategies/executeStrategyTx')
+        const receipt = await executeStellarBytecode({ xdr }, { stellarAddress: wallet, horizonUrl: 'https://horizon.stellar.org',
+          signRawHash: async input => {
+            const signed = await stellarSigning.signRawHash(input)
+            if (Date.now() >= result.expires) throw Error('Quote expired during signing. Request a fresh quote.')
+            return signed
+          } })
+        setSignature(receipt.hash)
+      } else {
+        const receipt = await payWithFreighter(xdr, wallet, result.expires)
+        setSignature(receipt.hash)
+      }
+    } catch (e) {
+      setConnectedStellar('')
+      setError(e instanceof Error ? e.message : 'Could not confirm submission. Check your wallet activity before retrying.')
+    } finally {
+      sending.current = false
+      setBusy(false)
+    }
+  }
   async function pay() {
     if (!result?.deposit || !signer || sending.current || signature || Date.now() >= result.expires) return
     sending.current = true
@@ -102,9 +137,25 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
         <p>Pix key: {pixKey}</p>
         <p className="text-sm">Use the payment button below. Pasting this token account into a wallet’s Send screen can send funds to the wrong account and leave the Pix payout unpaid. The prepared payment includes quote tracking and requires SOL for the fee.</p>
       </div>}
-      {signature ? <p role="status">Submitted on Solana. <a href={'https://solscan.io/tx/' + signature} target="_blank" rel="noreferrer">View transaction</a></p>
+      {signature ? <p role="status">Submitted on {result.stellarDeposit ? 'Stellar' : 'Solana'}. <a href={(result.stellarDeposit ? 'https://stellar.expert/explorer/public/tx/' : 'https://solscan.io/tx/') + signature} target="_blank" rel="noreferrer">View transaction</a></p>
       : expired ? <p role="status">Quote expired. Generate a new quote.</p> : <>
         <p>Valid until {new Date(result.expires).toLocaleTimeString()}.</p>
+        {stellarDeposit && <>
+          <p>Pix key: {pixKey}</p>
+          <button disabled={busy} className="ui-btn-primary" onClick={() => { void stellarPayment() }}>
+            {busy ? 'Waiting for wallet…' : ownsStellar || connectedStellar === wallet ? 'Pay ' + normalized + ' USDC with Stellar wallet' : 'Connect Stellar wallet (Freighter)'}
+          </button>
+          <div>
+            <p className="ui-label">Stellar deposit address for this quote</p>
+            <p className="break-all select-all font-mono">{stellarDeposit.address}</p>
+            <p>Memo (ID): <span className="select-all font-mono">{stellarDeposit.memo}</span></p>
+            <p className="text-sm">{stellarDeposit.singlePayment
+              ? 'To pay manually, send ' + stellarDeposit.amount + ' USDC from the funding wallet on Stellar mainnet. Use the full M address and the memo ID above.'
+              : 'This transaction includes a separate fee payment. Sign the prepared transaction to include every payment.'}</p>
+          </div>
+          <button className="ui-btn-secondary" onClick={() => { void navigator.clipboard.writeText(stellarDeposit.address).then(() => { setCopied(true) }).catch(() => { setError('Select the deposit address above to copy it.') }) }}>{copied ? 'Address copied' : 'Copy deposit address'}</button>
+          <details><summary>Prepared transaction for another Stellar wallet (XDR)</summary><p className="break-all select-all font-mono">{stellarDeposit.xdr}</p></details>
+        </>}
         {result.deposit && (signer
           ? <button disabled={busy} className="ui-btn-primary" onClick={() => { void pay() }}>{busy ? 'Waiting for wallet…' : 'Pay ' + normalized + ' ' + asset.symbol + ' with Solana wallet'}</button>
           : <button className="ui-btn-secondary" onClick={() => { connectWallet({ walletChainType: 'solana-only' }) }}>Connect funding wallet ({wallet.slice(0, 4)}…{wallet.slice(-4)})</button>)}

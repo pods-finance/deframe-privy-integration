@@ -30,7 +30,8 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
   })
   if (asset.walletNetwork !== 'evm') params.set('rampProvider', 'avenia')
   const prepareSolana = !onramp && asset.walletNetwork === 'solana'
-  if (prepareSolana) {
+  const prepareStellar = !onramp && asset.walletNetwork === 'stellar'
+  if (prepareSolana || prepareStellar) {
     if (!pixKey?.trim()) throw Error('Enter the Pix key that will receive the payout.')
     params.set('pixKey', pixKey.trim())
   }
@@ -56,7 +57,10 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
   const code = readString(asRecord(instructions?.pix)?.copyPaste)
   if (onramp && !code) throw Error('Avenia did not return a Pix payment code. Request a fresh quote.')
   const ticketEnd = readString(instructions?.expiresAt)
-  const expires = Math.min(Number(quote.deadline) * 1000, ticketEnd ? Date.parse(ticketEnd) : Infinity)
+  const stellarDeposit = prepareStellar && body
+    ? await (await import('./stellarPixDeposit')).readStellarPixDeposit(body, readString(quote.quoteId) ?? '', wallet, asset.token, amountIn)
+    : undefined
+  const expires = Math.min(Number(quote.deadline) * 1000, ticketEnd ? Date.parse(ticketEnd) : Infinity, stellarDeposit?.validUntil ?? Infinity)
   if (!Number.isFinite(expires) || expires <= Date.now()) throw Error('Quote expired. Request a fresh quote.')
   let deposit
   if (prepareSolana) {
@@ -66,5 +70,5 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
     const { readSolanaPixDeposit } = await import('./solanaPixDeposit')
     deposit = readSolanaPixDeposit(encoded, wallet, asset.token, amountIn, quoteId)
   }
-  return { credit: formatUnits(BigInt(amount), onramp ? asset.decimals : 2) + ' ' + symbol, expires, code, deposit }
+  return { credit: formatUnits(BigInt(amount), onramp ? asset.decimals : 2) + ' ' + symbol, expires, code, deposit, stellarDeposit }
 }

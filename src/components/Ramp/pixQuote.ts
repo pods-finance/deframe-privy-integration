@@ -6,7 +6,7 @@ import { readEvmPixDeposit } from './evmPixDeposit'
 export const PIX_TEST_SAFE = '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'
 export const pixNativeWallets = {
   solana: 'EDGGGTA5Ee5Dv7bncqt6ry2SRKaQmJ72BzVZVP3QYSLm',
-  stellar: 'GC5UWH5EQEH2IAZNNPGIQFLQ3TRGDIWQO5K57VADURTLGJESRGZTAPRF',
+  stellar: 'GDBOIPKDQA6MHGDHZ6YMWBZKGKESLVY4RYIVKUSMOAJ3O6NMB5X3HCAF',
 } as const
 
 function pixAsset(chain: string, symbol: string, offramp = true) {

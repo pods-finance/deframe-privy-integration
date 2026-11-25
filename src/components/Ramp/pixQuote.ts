@@ -21,7 +21,7 @@ export const pixAssets = [
   pixAsset('solana', 'USDC'), pixAsset('solana', 'BRS'), pixAsset('stellar', 'USDC'),
 ]
 
-export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[number], amountIn: string, wallet: string) {
+export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[number], amountIn: string, wallet: string, pixKey?: string) {
   const params = new URLSearchParams({
     preferredProvider: 'pods', amountIn,
     originChain: onramp ? 'fiat' : asset.chain, tokenIn: onramp ? 'BRL' : asset.token,
@@ -29,6 +29,11 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
     [onramp ? 'destinationAddress' : 'originAddress']: wallet,
   })
   if (asset.walletNetwork !== 'evm') params.set('rampProvider', 'avenia')
+  const prepareSolana = !onramp && asset.walletNetwork === 'solana'
+  if (prepareSolana) {
+    if (!pixKey?.trim()) throw Error('Enter the Pix key that will receive the payout.')
+    params.set('pixKey', pixKey.trim())
+  }
   const preview = import.meta.env.VITE_PIX_PREVIEW === '3500'
   const url = preview ? new URL('/preview-3500-quote', window.location.origin) : deframeApiUrl('/v2/swap/quote')
   url.search = params.toString()
@@ -53,5 +58,13 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
   const ticketEnd = readString(instructions?.expiresAt)
   const expires = Math.min(Number(quote.deadline) * 1000, ticketEnd ? Date.parse(ticketEnd) : Infinity)
   if (!Number.isFinite(expires) || expires <= Date.now()) throw Error('Quote expired. Request a fresh quote.')
-  return { credit: formatUnits(BigInt(amount), onramp ? asset.decimals : 2) + ' ' + symbol, expires, code }
+  let deposit
+  if (prepareSolana) {
+    const encoded = readString(asRecord(body?.transactionData)?.rawTransaction)
+    const quoteId = readString(quote.id) ?? readString(quote.quoteId)
+    if (!encoded || !quoteId) throw Error('The preview did not return deposit instructions. Request a new quote.')
+    const { readSolanaPixDeposit } = await import('./solanaPixDeposit')
+    deposit = readSolanaPixDeposit(encoded, wallet, asset.token, amountIn, quoteId)
+  }
+  return { credit: formatUnits(BigInt(amount), onramp ? asset.decimals : 2) + ' ' + symbol, expires, code, deposit }
 }

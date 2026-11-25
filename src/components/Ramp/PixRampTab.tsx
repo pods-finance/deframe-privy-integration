@@ -21,7 +21,6 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
   const { wallets: evmWallets } = useEvmWallets()
   const { getClientForChain } = useSmartWallets()
   const [connectedStellar, setConnectedStellar] = useState('')
-  const [classicStellar, setClassicStellar] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
   const { wallets } = useWallets()
   const signer = wallets.find(w => w.address === wallet)
@@ -87,14 +86,13 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
     try {
       const quote = await getPixQuote(onramp, asset, raw, wallet, pixKey)
       setSignature('')
-      setClassicStellar(false); setCopiedMemo(false)
+      setCopiedMemo(false)
       setExpired(false); setResult(quote)
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not generate the quote.') }
     finally { setBusy(false) }
   }
   const code = result?.code
   const stellarDeposit = result?.stellarDeposit
-  const stellarAddress = (classicStellar ? stellarDeposit?.classicAddress : undefined) ?? stellarDeposit?.address
   const evmDeposit = result?.evmDeposit
   const connectedFundingWallet = evmWallets.find(w => w.address.toLowerCase() === evmDeposit?.wallet.toLowerCase())
   const smartFundingWallet = Boolean(evmDeposit && privyWallet?.toLowerCase() === evmDeposit.wallet.toLowerCase())
@@ -207,15 +205,10 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
             {busy ? 'Waiting for wallet…' : ownsStellar || connectedStellar === wallet ? 'Pay ' + normalized + ' USDC with Stellar wallet' : 'Connect Stellar wallet (Freighter)'}
           </button>
           {stellarDeposit.singlePayment ? <>
-            {stellarDeposit.classicAddress && <label className="ui-label">Manual payment format
-              <select className="ui-select" value={classicStellar ? 'classic' : 'muxed'} onChange={e => { setClassicStellar(e.target.value === 'classic'); setCopied(false); setCopiedMemo(false) }}>
-                <option value="muxed">Muxed address (M…)</option><option value="classic">Bridge address (G…) + required memo</option>
-              </select>
-            </label>}
-            <p>Send {stellarDeposit.amount} USDC from the quoted funding wallet on Stellar mainnet.</p>
-            <p className="break-all select-all font-mono">{stellarAddress}</p>
-            <button className="ui-btn-secondary" onClick={() => { if (stellarAddress) void navigator.clipboard.writeText(stellarAddress).then(() => { setCopied(true) }).catch(() => { setError('Select the deposit address above to copy it.') }) }}>{copied ? 'Address copied' : 'Copy deposit address'}</button>
-            <p>{classicStellar ? 'Required memo (ID or exact text)' : 'Optional memo (ID)'}: <span className="select-all font-mono">{stellarDeposit.memo}</span></p>
+            <p>Send {stellarDeposit.amount} USDC from the quoted funding wallet to this full M address on Stellar mainnet.</p>
+            <p className="break-all select-all font-mono">{stellarDeposit.address}</p>
+            <button className="ui-btn-secondary" onClick={() => { void navigator.clipboard.writeText(stellarDeposit.address).then(() => { setCopied(true) }).catch(() => { setError('Select the deposit address above to copy it.') }) }}>{copied ? 'Address copied' : 'Copy deposit address'}</button>
+            <p>Optional memo (ID): <span className="select-all font-mono">{stellarDeposit.memo}</span></p>
             <button className="ui-btn-secondary" onClick={() => { void navigator.clipboard.writeText(stellarDeposit.memo).then(() => { setCopiedMemo(true) }).catch(() => { setError('Select the memo above to copy it.') }) }}>{copiedMemo ? 'Memo copied' : 'Copy memo'}</button>
           </> : <p>This quote includes a separate fee payment. Sign the prepared transaction to include every payment.</p>}
           <details><summary>Prepared transaction for another Stellar wallet (XDR)</summary><p className="break-all select-all font-mono">{stellarDeposit.xdr}</p></details>

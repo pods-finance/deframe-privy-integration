@@ -1,6 +1,5 @@
 import { FeeBumpTransaction, Horizon, MuxedAccount, Networks, TransactionBuilder } from '@stellar/stellar-sdk'
 import { parseUnits } from 'viem'
-import { asRecord } from './rampApi'
 
 export async function readStellarPixDeposit(body: Record<string, unknown>, quoteId: string, wallet: string, token: string, amountIn: string) {
   const { amount, depositAddress, muxId, xdrUnsigned } = body
@@ -12,9 +11,8 @@ export async function readStellarPixDeposit(body: Record<string, unknown>, quote
   const tx = TransactionBuilder.fromXDR(xdrUnsigned, Networks.PUBLIC)
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(quoteId))
   const expectedId = (new DataView(digest).getBigUint64(0) || 1n).toString()
-  const muxed = MuxedAccount.fromAddress(depositAddress, '0')
   if (tx instanceof FeeBumpTransaction || tx.source !== wallet || tx.signatures.length ||
-    expectedId !== muxId || muxed.id() !== muxId ||
+    expectedId !== muxId || MuxedAccount.fromAddress(depositAddress, '0').id() !== muxId ||
     tx.memo.type !== 'id' || String(tx.memo.value) !== muxId || !tx.operations.length) {
     throw Error('The Stellar transaction does not match the funding wallet or quote.')
   }
@@ -29,13 +27,8 @@ export async function readStellarPixDeposit(body: Record<string, unknown>, quote
     total += raw
   }
   if (total !== BigInt(amountIn)) throw Error('The Stellar payment total differs from the quote.')
-  const classic = asRecord(body.classicDeposit)
-  const classicAddress = muxed.baseAccount().accountId()
-  if (body.classicDeposit !== undefined && (classic?.address !== classicAddress || classic.memo !== muxId || classic.memoType !== 'id')) {
-    throw Error('The Stellar bridge address or memo differs from the prepared payment.')
-  }
   const maxTime = Number(tx.timeBounds?.maxTime ?? 0)
-  return { address: depositAddress, classicAddress: classic ? classicAddress : undefined, amount, memo: muxId, xdr: xdrUnsigned, singlePayment: tx.operations.length === 1,
+  return { address: depositAddress, amount, memo: muxId, xdr: xdrUnsigned, singlePayment: tx.operations.length === 1,
     validUntil: maxTime ? maxTime * 1000 : Infinity }
 }
 

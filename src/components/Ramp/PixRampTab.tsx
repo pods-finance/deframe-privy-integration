@@ -3,13 +3,13 @@ import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { QRCode } from 'react-qr-code'
 import { isAddress } from 'viem'
 import { humanToRaw } from './rampRoutes'
-import { getPixQuote, pixAssets, PIX_TEST_SAFE } from './pixQuote'
+import { getPixQuote, pixAssets, pixNativeWallets, PIX_TEST_SAFE } from './pixQuote'
 
-function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet: string }) {
-  const [wallet, setWallet] = useState(privyWallet)
+function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: string }) {
+  const [evmWallet, setEvmWallet] = useState(privyWallet ?? PIX_TEST_SAFE)
   const assets = pixAssets.filter(a => onramp || a.offramp)
-  const [chain, setChain] = useState(assets[0].chain)
-  const asset = assets.find(a => a.chain === chain) ?? assets[0]
+  const [asset, setAsset] = useState(assets[0])
+  const wallet = asset.walletNetwork === 'evm' ? evmWallet : pixNativeWallets[asset.walletNetwork]
   const [amount, setAmount] = useState('1')
   const [result, setResult] = useState<Awaited<ReturnType<typeof getPixQuote>>>()
   const [busy, setBusy] = useState(false)
@@ -24,7 +24,7 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet: string
     return () => { clearTimeout(timer); document.removeEventListener('visibilitychange', check) }
   }, [result])
   const normalized = amount.trim().replace(',', '.')
-  const raw = /^\d+(\.\d+)?$/.test(normalized) ? humanToRaw(normalized, onramp ? 2 : 6) : null
+  const raw = /^\d+(\.\d+)?$/.test(normalized) ? humanToRaw(normalized, onramp ? 2 : asset.decimals) : null
   async function prepare() {
     if (!raw || busy) return
     setError(''); setBusy(true); setCopied(false)
@@ -37,18 +37,6 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet: string
   const code = result?.code
   return <section className="ui-panel-shell flex flex-col gap-5 p-6 sm:p-8">
     <h2 className="ui-heading-section">{onramp ? 'Pay with Pix' : 'Quote a Pix payout'}</h2>
-    {onramp && privyWallet.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && (
-      <label className="ui-label">Destination wallet
-        <select className="ui-select mt-1" value={wallet} disabled={busy} onChange={event => {
-          setWallet(event.target.value)
-          setResult(undefined)
-          setError('')
-        }}>
-          <option value={privyWallet}>My Privy wallet ({privyWallet.slice(0, 6)}…{privyWallet.slice(-4)})</option>
-          <option value={PIX_TEST_SAFE}>Test Safe (0xBDFf…210a)</option>
-        </select>
-      </label>
-    )}
     {result ? <>
       <div><p className="ui-label">You receive</p><p className="text-3xl font-semibold">{result.credit}</p></div>
       <p>{onramp ? 'Pay R$' + normalized : 'From ' + normalized + ' ' + asset.symbol} · {asset.label}</p>
@@ -66,9 +54,28 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet: string
     </> : <form className="flex flex-col gap-4" onSubmit={event => { event.preventDefault(); void prepare() }}>
       <fieldset disabled={busy} className="flex flex-col gap-4">
         {onramp && <p>Origin: Pix (BRL)</p>}
-        <label className="ui-label">{onramp ? 'Destination chain' : 'Origin chain'}
-          <select className="ui-select mt-1" value={chain} onChange={e => { setChain(e.target.value) }}>
-            {assets.map(a => <option key={a.chain} value={a.chain}>{a.label}</option>)}
+        <label className="ui-label">{onramp ? 'Destination wallet' : 'Origin wallet'}
+          <select className="ui-select mt-1" value={wallet} onChange={e => {
+            const address = e.target.value
+            const network = address === pixNativeWallets.solana ? 'solana' : address === pixNativeWallets.stellar ? 'stellar' : 'evm'
+            if (network === 'evm') setEvmWallet(address)
+            const nextAsset = assets.find(a => a.walletNetwork === network)
+            if (nextAsset && network !== asset.walletNetwork) setAsset(nextAsset)
+            setError('')
+          }}>
+            {privyWallet && privyWallet.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={privyWallet}>My Privy wallet ({privyWallet.slice(0, 6)}…{privyWallet.slice(-4)})</option>}
+            <option value={PIX_TEST_SAFE}>Test Safe (0xBDFf…210a)</option>
+            <option value={pixNativeWallets.solana}>My Solana wallet (8wyq…H2hT)</option>
+            <option value={pixNativeWallets.stellar}>My Stellar wallet (GBIB…OR5M)</option>
+          </select>
+        </label>
+        <label className="ui-label">{onramp ? 'Destination asset and chain' : 'Origin asset and chain'}
+          <select className="ui-select mt-1" value={asset.label} onChange={e => {
+            const nextAsset = assets.find(a => a.label === e.target.value)
+            if (nextAsset) setAsset(nextAsset)
+            setError('')
+          }}>
+            {assets.map(a => <option key={a.label} value={a.label}>{a.label}</option>)}
           </select>
         </label>
         {!onramp && <p>Destination: Pix (BRL)</p>}
@@ -88,8 +95,6 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet: string
 export default function PixRampTab({ onramp }: { onramp: boolean }) {
   const { client } = useSmartWallets()
   const wallet = client?.account.address
-  if (!wallet || !isAddress(wallet)) {
-    return <p role="status" className="ui-panel-shell p-6">Connect your Privy EVM smart wallet to request a Pix quote.</p>
-  }
-  return <PixForm key={wallet + String(onramp)} onramp={onramp} privyWallet={wallet} />
+  const privyWallet = wallet && isAddress(wallet) ? wallet : undefined
+  return <PixForm key={String(onramp)} onramp={onramp} privyWallet={privyWallet} />
 }

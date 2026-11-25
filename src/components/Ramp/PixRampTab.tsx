@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useConnectWallet } from '@privy-io/react-auth'
+import { useConnectWallet, usePrivy } from '@privy-io/react-auth'
+import { useSignRawHash } from '@privy-io/react-auth/extended-chains'
 import { useSignAndSendTransaction, useWallets } from '@privy-io/react-auth/solana'
 import { getBase58Decoder } from '@solana/kit'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
@@ -27,6 +28,33 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [expired, setExpired] = useState(false)
+  const { user } = usePrivy()
+  const stellarSigning = useSignRawHash()
+  const [trustlineReady, setTrustlineReady] = useState(false)
+  const [trustlineError, setTrustlineError] = useState('')
+  const stellarOnramp = onramp && asset.walletNetwork === 'stellar'
+  const issuer = stellarOnramp ? asset.token.split(':')[1] : ''
+  const ownsStellar = user?.linkedAccounts.some(account => account.type === 'wallet' && account.chainType === 'stellar' && account.address === wallet && account.walletClientType === 'privy')
+  async function enableTrustline() {
+    if (!stellarOnramp || !ownsStellar || busy) return
+    setBusy(true); setTrustlineError('')
+    try {
+      const { Asset, BASE_FEE, Horizon, Networks, Operation, TransactionBuilder } = await import('@stellar/stellar-sdk')
+      const { executeStellarBytecode } = await import('../Strategies/executeStrategyTx')
+      const horizonUrl = 'https://horizon.stellar.org'
+      const account = await new Horizon.Server(horizonUrl).loadAccount(wallet)
+      const line = account.balances.find(b => 'asset_code' in b && b.asset_code === 'USDC' && b.asset_issuer === issuer)
+      if (line && 'is_authorized' in line && !line.is_authorized) throw Error('The issuer has not authorized this trustline.')
+      if (!line) {
+        const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: Networks.PUBLIC })
+          .addOperation(Operation.changeTrust({ asset: new Asset('USDC', issuer) })).setTimeout(180).build()
+        await executeStellarBytecode({ xdr: tx.toXDR() }, { stellarAddress: wallet, horizonUrl, signRawHash: input => stellarSigning.signRawHash(input) })
+      }
+      setTrustlineReady(true); setError('')
+    } catch (cause) {
+      setTrustlineError(cause instanceof Error ? cause.message : 'Could not enable the USDC trustline.')
+    } finally { setBusy(false) }
+  }
   useEffect(() => {
     if (!result) return
     const check = () => { setExpired(Date.now() >= result.expires) }
@@ -119,6 +147,13 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
         {needsDeposit && <label className="ui-label">Payout Pix key
           <input className="ui-input mt-1" autoComplete="off" required value={pixKey} onChange={e => { setPixKey(e.target.value.trim()) }} />
         </label>}
+        {stellarOnramp && trustlineReady && <p role="status">Circle USDC is enabled. You can generate your Pix QR.</p>}
+        {stellarOnramp && !trustlineReady && /trustline/i.test(error) && <div>
+          <p>{ownsStellar ? 'Enable Circle USDC on Stellar mainnet. This reserves 0.5 XLM and uses a network fee.' : 'Open the wallet that controls this Stellar address, choose Add asset, select Circle USDC with the issuer below, and approve the trustline. Then generate the Pix QR again.'}</p>
+          <p className="break-all font-mono">{issuer}</p>
+          {ownsStellar && <button type="button" className="ui-btn-secondary" disabled={busy} onClick={() => { void enableTrustline() }}>Enable Circle USDC</button>}
+          {trustlineError && <p role="alert">{trustlineError}</p>}
+        </div>}
         <label className="ui-label">Amount ({onramp ? 'BRL' : asset.symbol})
           <input className="ui-input mt-1" inputMode="decimal" value={amount} onChange={e => { setAmount(e.target.value) }} />
         </label>

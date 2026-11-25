@@ -8,7 +8,6 @@ import {
   Horizon,
   Keypair,
   Networks,
-  Transaction,
   TransactionBuilder,
   xdr,
 } from '@stellar/stellar-sdk'
@@ -101,7 +100,7 @@ function extractSolanaTransaction(
   }
 }
 
-function extractStellarXdr(resp: DeframeBytecodeResponse): string | null {
+function extractStellarXdr(resp: Pick<DeframeBytecodeResponse, 'xdr' | 'transaction'>): string | null {
   if (typeof resp.xdr === 'string' && resp.xdr.trim()) return resp.xdr.trim()
   if (typeof resp.transaction === 'string' && resp.transaction.trim()) {
     return resp.transaction.trim()
@@ -110,7 +109,7 @@ function extractStellarXdr(resp: DeframeBytecodeResponse): string | null {
 }
 
 function toHexHash(hashBytes: Buffer | Uint8Array): `0x${string}` {
-  return `0x${Buffer.from(hashBytes).toString('hex')}` as `0x${string}`
+  return `0x${Buffer.from(hashBytes).toString('hex')}`
 }
 
 export async function executeEvmBytecode(
@@ -162,13 +161,14 @@ export async function executeSolanaBytecode(
 }
 
 export async function executeStellarBytecode(
-  resp: DeframeBytecodeResponse,
+  resp: Pick<DeframeBytecodeResponse, 'xdr' | 'transaction'>,
   deps: StellarExecutorDeps
 ): Promise<{ hash: string; result: Horizon.HorizonApi.SubmitTransactionResponse }> {
+  const configuredHorizon: string | undefined = import.meta.env.VITE_APP_STELLAR_HORIZON_URL
   const {
     signRawHash,
     stellarAddress,
-    horizonUrl = import.meta.env.VITE_APP_STELLAR_HORIZON_URL || DEFAULT_STELLAR_HORIZON_URL,
+    horizonUrl = configuredHorizon?.trim() ? configuredHorizon.trim() : DEFAULT_STELLAR_HORIZON_URL,
     networkPassphrase = Networks.PUBLIC,
   } = deps
 
@@ -188,7 +188,7 @@ export async function executeStellarBytecode(
     throw new Error('Fee-bump Stellar transactions are not supported yet')
   }
 
-  const tx = parsed as Transaction
+  const tx = parsed
   const hashHex = toHexHash(tx.hash())
 
   const { signature } = await signRawHash({

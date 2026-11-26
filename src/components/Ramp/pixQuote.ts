@@ -1,6 +1,6 @@
 import { formatUnits } from 'viem'
 import { asRecord, deframeApiHeaders, deframeApiUrl, parseResponseBody, readString } from './rampApi'
-import { assets } from '../BridgeCatalog/catalog'
+import { assets, snapshot } from '../BridgeCatalog/catalog'
 import { readEvmPixDeposit } from './evmPixDeposit'
 
 function pixAsset(chain: string, symbol: string, offramp = true) {
@@ -13,6 +13,7 @@ export const gnosisUsdc = pixAsset('gnosis', 'USDC', false)
 export const stableUsdt0 = pixAsset('stable', 'USDT0')
 export const pixAssets = [
   gnosisUsdc, stableUsdt0, pixAsset('base', 'USDC'),
+  ...(snapshot.selections.includes('fiat/BRL base/EURC avenia PIX') ? [pixAsset('base', 'EURC', false)] : []),
   pixAsset('solana', 'USDC'), pixAsset('solana', 'BRS'), pixAsset('stellar', 'USDC'),
 ]
 

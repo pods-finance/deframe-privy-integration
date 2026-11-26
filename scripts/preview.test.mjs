@@ -141,6 +141,28 @@ for (const [index, [id, origin]] of targets.entries()) {
       previousTargetCookie = again.headers.get('set-cookie').split(';')[0]
     }
     assert.equal(upstream.mock.callCount(), manual ? 6 : 3)
+    const { pixAssets, getPixQuote } = await server.ssrLoadModule('/src/components/Ramp/pixQuote.ts')
+    const eurc = pixAssets.find(a => a.label === 'EURC · Base')
+    assert.equal(Boolean(eurc), id === 'pr-3561')
+    if (eurc) {
+      const token = '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42'
+      upstream.mock.mockImplementationOnce(url => {
+        assert.equal(url.pathname, '/v2/swap/quote')
+        assert.deepEqual(Object.fromEntries(url.searchParams), {
+          preferredProvider: 'pods', amountIn: '1000', originChain: 'fiat', tokenIn: 'BRL',
+          destinationChain: 'base', tokenOut: token, destinationAddress: evm,
+        })
+        return Response.json({
+          quote: { originChain: 'fiat', destinationChain: 'base', destinationAddress: evm,
+            tokenIn: { amount: '1000' }, tokenOut: { contract: token, decimals: 6, symbol: 'EURC', amount: '1500000' },
+            deadline: Math.floor(Date.now() / 1000) + 300 },
+          paymentInstructions: { pix: { copyPaste: 'test-pix-code' } },
+        })
+      })
+      const result = await getPixQuote(true, eurc, '1000', evm)
+      assert.equal(result.credit, '1.5 EURC')
+      assert.equal(result.code, 'test-pix-code')
+    }
   })
 }
 

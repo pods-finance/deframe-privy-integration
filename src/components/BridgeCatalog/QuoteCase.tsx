@@ -106,10 +106,13 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
       if (row.rampProvider && q.rampProvider && q.rampProvider !== row.rampProvider) throw Error('The response used a different ramp provider.')
       const instructions = asRecord(body?.paymentInstructions)
       const expires = activeDeadline(q.deadline, readString(instructions?.expiresAt))
-      // These four routes explicitly support a plain ERC-20 deposit from the external wallet.
-      const canDeposit = bound && reverse
-      const deposit = canDeposit ? readString(body?.depositAddress) ?? readString(q.depositAddress) : undefined
-      if (deposit && (!isAddress(deposit) || /^0x0{40}$/i.test(deposit) || (q.depositAddress && !sameToken(q.depositAddress, deposit)))) throw Error('Invalid deposit address in quote.')
+      // A tracked wallet transaction may use a different receiver. Only show the API's explicit deposit instructions.
+      const canDeposit = bound && (reverse || (row.family === 'EURC inventory' && row.provider === 'pods' && isEvm(input.chain)))
+      const deposit = canDeposit ? readString(body?.depositAddress) ?? (reverse ? readString(q.depositAddress) : undefined) : undefined
+      if (deposit && (!isAddress(deposit) || /^0x0{40}$/i.test(deposit) ||
+        [sender, recipient, input.contract].some(address => sameToken(address, deposit)) ||
+        (body?.depositAddress && (!src.chainId || Number(body.chainId) !== Number(src.chainId))) ||
+        (q.depositAddress && !sameToken(q.depositAddress, deposit)))) throw Error('Invalid deposit address in quote.')
       const pixCode = bound && row.from === 'fiat/BRL' ? readString(asRecord(instructions?.pix)?.copyPaste) : undefined
       setResult({ success: true, id, expires, pixCode, deposit, message: `Receive ${formatUnits(BigInt(net), output.decimals)} ${label(row.to)}` })
       mark(row.id, true)
@@ -134,7 +137,12 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
       <strong>{result.message}</strong>
       {result.id && result.expires && <p>Quote {result.id} · {expired ? 'Expired' : 'Valid until ' + new Date(result.expires).toLocaleTimeString()}</p>}
       {result.success && walletSwap && <a className="ui-btn-tab" href={targetPath + '/swap?' + swapParams.toString()}>Open this route in Bridge swap</a>}
-      {!expired && result.deposit && <p>Send {amount} {label(row.from)} to <code className="break-all">{result.deposit}</code>. Receive at <code className="break-all">{recipient}</code>.</p>}
+      {!expired && result.deposit && <div className="space-y-1">
+        <p><strong>Deposit address on {input.chain}</strong></p>
+        <code className="block break-all select-all">{result.deposit}</code>
+        <p>Send exactly {value} {label(row.from)} from the selected sender before the quote expires.</p>
+        <p>Receive {label(row.to)} at <code className="break-all">{recipient}</code>.</p>
+      </div>}
       {!expired && result.pixCode && <div><p>{row.provider === 'avenia' ? 'Sandbox Pix payment code' : 'Pix payment code'}</p><QRCode value={result.pixCode} size={144} /><details><summary>Copy-and-paste code</summary><code className="break-all">{result.pixCode}</code></details></div>}
     </div>}
   </form>

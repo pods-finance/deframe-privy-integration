@@ -12,7 +12,7 @@ import { getPixQuote, pixAssets } from './pixQuote'
 
 function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: string }) {
   const [evmWallet, setEvmWallet] = useState(onramp ? privyWallet ?? testSafe : testSafe || (privyWallet ?? ''))
-  const assets = pixAssets.filter(a => onramp || a.offramp)
+  const assets = pixAssets(onramp)
   const [asset, setAsset] = useState(assets[0])
   const [native, setNative] = useState(nativeWallets)
   const wallet = asset.walletNetwork === 'evm' ? evmWallet : native[asset.walletNetwork]

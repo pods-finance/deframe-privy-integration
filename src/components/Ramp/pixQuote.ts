@@ -3,21 +3,25 @@ import { asRecord, deframeApiHeaders, deframeApiUrl, parseResponseBody, readStri
 import { assets, snapshot } from '../BridgeCatalog/catalog'
 import { readEvmPixDeposit } from './evmPixDeposit'
 
-function pixAsset(chain: string, symbol: string, offramp = true) {
+function pixAsset(chain: string, symbol: string) {
   const { contract: token, decimals } = assets[chain + '/' + symbol]
   const walletNetwork = chain === 'solana' || chain === 'stellar' ? chain : 'evm'
-  return { label: symbol + ' · ' + chain[0].toUpperCase() + chain.slice(1), chain, token, symbol, decimals, offramp, walletNetwork } as const
+  return { label: symbol + ' · ' + chain[0].toUpperCase() + chain.slice(1), chain, token, symbol, decimals, walletNetwork } as const
 }
 
-export const gnosisUsdc = pixAsset('gnosis', 'USDC', false)
+export const gnosisUsdc = pixAsset('gnosis', 'USDC')
 export const stableUsdt0 = pixAsset('stable', 'USDT0')
-export const pixAssets = [
-  gnosisUsdc, stableUsdt0, pixAsset('base', 'USDC'),
-  ...(snapshot.selections.includes('fiat/BRL base/EURC avenia PIX') ? [pixAsset('base', 'EURC', false)] : []),
-  pixAsset('solana', 'USDC'), pixAsset('solana', 'BRS'), pixAsset('stellar', 'USDC'),
-]
+export function pixAssets(onramp: boolean) {
+  const eurcRoute = onramp ? 'fiat/BRL base/EURC avenia PIX' : 'base/EURC fiat/BRL avenia PIX'
+  return [
+    ...(onramp ? [gnosisUsdc] : []),
+    ...(snapshot.selections.includes(eurcRoute) ? [pixAsset('base', 'EURC')] : []),
+    stableUsdt0, pixAsset('base', 'USDC'),
+    pixAsset('solana', 'USDC'), pixAsset('solana', 'BRS'), pixAsset('stellar', 'USDC'),
+  ]
+}
 
-export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[number], amountIn: string, wallet: string, pixKey?: string) {
+export async function getPixQuote(onramp: boolean, asset: ReturnType<typeof pixAsset>, amountIn: string, wallet: string, pixKey?: string) {
   const params = new URLSearchParams({
     preferredProvider: 'pods', amountIn,
     originChain: onramp ? 'fiat' : asset.chain, tokenIn: onramp ? 'BRL' : asset.token,

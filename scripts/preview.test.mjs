@@ -142,8 +142,10 @@ for (const [index, [id, origin]] of targets.entries()) {
     }
     assert.equal(upstream.mock.callCount(), manual ? 6 : 3)
     const { pixAssets, getPixQuote } = await server.ssrLoadModule('/src/components/Ramp/pixQuote.ts')
-    const eurc = pixAssets.find(a => a.label === 'EURC · Base')
+    const eurc = pixAssets(true).find(a => a.label === 'EURC · Base')
     assert.equal(Boolean(eurc), id === 'pr-3561')
+    const payoutAsset = pixAssets(false)[0]
+    assert.equal(payoutAsset.label, id === 'pr-3561' ? 'EURC · Base' : 'USDT0 · Stable')
     if (eurc) {
       const token = '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42'
       upstream.mock.mockImplementationOnce(url => {
@@ -162,6 +164,24 @@ for (const [index, [id, origin]] of targets.entries()) {
       const result = await getPixQuote(true, eurc, '1000', evm)
       assert.equal(result.credit, '1.5 EURC')
       assert.equal(result.code, 'test-pix-code')
+
+      const pixKey = 'tester@example.invalid'
+      const depositAddress = '0x0000000000000000000000000000000000000001'
+      upstream.mock.mockImplementationOnce(url => {
+        assert.deepEqual(Object.fromEntries(url.searchParams), {
+          preferredProvider: 'pods', amountIn: '1000000', originChain: 'base', tokenIn: token,
+          destinationChain: 'fiat', tokenOut: 'BRL', originAddress: evm, rampProvider: 'avenia', pixKey,
+        })
+        return Response.json({ chainId: 8453, depositAddress,
+          quote: { quoteId: 'test-eurc-offramp', provider: 'avenia', originChain: 'base', destinationChain: 'fiat', originAddress: evm,
+            tokenIn: { chainId: 8453, contract: token, decimals: 6, amount: '1000000' }, tokenOut: { symbol: 'BRL', decimals: 2, amount: '620' },
+            deadline: Math.floor(Date.now() / 1000) + 300 },
+        })
+      })
+      const payout = await getPixQuote(false, payoutAsset, '1000000', evm, pixKey)
+      assert.equal(payout.credit, '6.2 BRL')
+      assert.equal(payout.evmDeposit.address, depositAddress)
+      assert.equal(payout.evmDeposit.call.to, token)
     }
   })
 }

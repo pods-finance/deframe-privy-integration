@@ -9,7 +9,7 @@ yarn install --frozen-lockfile
 cp .env.example .env
 ```
 
-Copy the public `VITE_APP_PRIVY_APP_ID` from your existing deframe-privy-integration `.env`. Set `DEFRAME_API_KEY` to the shared LootGo customer API key in this checkout’s own regular, ignored `.env`. The local proxy uses that key for every target.
+Copy the public `VITE_APP_PRIVY_APP_ID` from your existing deframe-privy-integration `.env`. Use a separate regular, ignored `.env` in each checkout. For dev and PR previews, set `DEFRAME_API_KEY` to the **dev LootGo** key. If a preview has its own LootGo key, set it in `.env.pr-<number>.local`.
 
 | Command | API target |
 | --- | --- |
@@ -18,7 +18,7 @@ Copy the public `VITE_APP_PRIVY_APP_ID` from your existing deframe-privy-integra
 | `yarn tester staging` | `https://staging-api.pods.finance` |
 | `yarn tester preview 3561` | `https://pr-3561.preview.pods.finance` |
 
-Open [the local tester](http://localhost:5500/). The header shows the active target and API URL. Stop and restart the server to switch. Preview takes a positive integer PR number. The previous `yarn tester 3561` shorthand also selects that preview.
+Open [the local tester](http://localhost:5500/). The header shows the active target and API URL. On staging and production, enter the customer API key for that target in the masked field. The local proxy validates it and keeps it in memory across page navigation. Choose **Clear customer API key** to change customers. Restarting the tester clears entered keys. Stop and restart the server to switch. Preview takes a positive integer PR number. The previous `yarn tester 3561` shorthand also selects that preview.
 
 For a default with `yarn tester` or `./start-preview.command`, set `DEFRAME_TARGET` in `.env` and set `DEFRAME_PREVIEW_PR` when using preview. The example defaults to dev. Set `DEFRAME_PREVIEW_PORT` to change the localhost port. Optional wallet overrides can go in `.env.staging.local`, `.env.pr-3561.local`, or the equivalent file for the selected target.
 

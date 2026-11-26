@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { parseEnv } from 'node:util'
+import { customerSessions } from './scripts/customer-sessions'
 import { targetForMode } from './scripts/tester-target.mjs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig, loadEnv, type Connect } from 'vite'
@@ -10,10 +11,10 @@ import { isAddress, zeroAddress } from 'viem'
 import { isAddress as isSolanaAddress } from '@solana/kit'
 import { StrKey } from '@stellar/stellar-sdk'
 
-// Read the shared credential separately from Vite's public environment loader.
-function serverApiKey() {
+// Read the non-production LootGo credential separately from Vite's public environment loader.
+function lootGoKey(mode: string) {
   if (process.env.DEFRAME_API_KEY) return process.env.DEFRAME_API_KEY
-  for (const file of ['.env.local', '.env']) {
+  for (const file of [`.env.${mode}.local`, '.env.local', '.env']) {
     if (existsSync(file)) {
       const key = parseEnv(readFileSync(file, 'utf8')).DEFRAME_API_KEY
       if (key) return key
@@ -26,13 +27,15 @@ export default defineConfig(({ mode, command }) => {
     'DEFRAME_TARGET', 'DEFRAME_PREVIEW_PR', 'DEFRAME_PREVIEW_PORT', 'TESTER_', 'VITE_APP_PRIVY_APP_ID',
   ])
   const target = targetForMode(mode, env)
-  const apiKey = command === 'serve' ? serverApiKey() : undefined
-  if (command === 'serve' && !apiKey) throw Error('Set DEFRAME_API_KEY in this checkout’s .env.')
+  const needsCustomerKey = target.id === 'prod' || target.id === 'staging'
+  const configuredKey = command === 'serve' && !needsCustomerKey ? lootGoKey(target.id) : undefined
+  if (command === 'serve' && !needsCustomerKey && !configuredKey) throw Error('Set DEFRAME_API_KEY to the dev LootGo key in this checkout’s .env.')
   if (command === 'serve' && !env.VITE_APP_PRIVY_APP_ID) throw Error('Set VITE_APP_PRIVY_APP_ID in this checkout’s .env.')
   const port = Number(env.DEFRAME_PREVIEW_PORT ?? 5500)
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('Invalid DEFRAME_PREVIEW_PORT.')
   const host = 'localhost:' + String(port)
   const origin = 'http://' + host
+  const sessions = needsCustomerKey ? customerSessions(target.id, port, target.origin) : undefined
   const evm = env.TESTER_EVM_ADDRESS?.trim() ?? ''
   const solana = env.TESTER_SOLANA_ADDRESS?.trim() ?? ''
   const stellar = env.TESTER_STELLAR_ADDRESS?.trim() ?? ''
@@ -41,16 +44,15 @@ export default defineConfig(({ mode, command }) => {
   if (stellar && !StrKey.isValidEd25519PublicKey(stellar)) throw Error('TESTER_STELLAR_ADDRESS must be a Stellar G account.')
 
   async function serve(req: IncomingMessage, res: ServerResponse, path: string, search: string) {
-    res.setHeader('Cache-Control', 'no-store')
-    if (req.method !== 'GET' || req.headers['x-deframe-target'] !== target.id ||
-        req.headers.host !== host || (req.headers.origin && req.headers.origin !== origin)) {
+    if (req.method !== 'GET') {
       res.statusCode = 403
-      res.end('Local tester requests only')
+      res.end('Local tester reads only')
       return
     }
+    const apiKey = sessions ? sessions.getKey(req) : configuredKey
     if (!apiKey) {
-      res.statusCode = 503
-      res.end('Set DEFRAME_API_KEY and restart the tester.')
+      res.statusCode = 401
+      res.end('Enter a customer API key for this target.')
       return
     }
     const url = new URL(path, target.origin)
@@ -67,11 +69,26 @@ export default defineConfig(({ mode, command }) => {
     const quote = local.pathname === '/v2/swap/quote'
     const status = /^\/v2\/swap\/status\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(local.pathname)
     const action = /^\/actions\/[a-f0-9]{24}$/i.test(local.pathname)
-    if (!quote && !status && !action) {
+    const customerKey = local.pathname === '/tester/customer-key'
+    if (!quote && !status && !action && !customerKey) {
       next()
       return
     }
-    void serve(req, res, quote ? '/v2/swap/quote' : local.pathname, quote ? local.search : '').catch(() => {
+    res.setHeader('Cache-Control', 'no-store')
+    if (req.headers['x-deframe-target'] !== target.id || req.headers.host !== host ||
+        (req.headers.origin !== undefined && req.headers.origin !== origin) ||
+        (customerKey && req.method !== 'GET' && req.headers.origin !== origin)) {
+      res.statusCode = 403
+      res.end('Local tester requests only')
+      return
+    }
+    if (customerKey && !sessions) {
+      res.statusCode = 404
+      res.end()
+      return
+    }
+    const operation = customerKey && sessions ? sessions.handle(req, res) : serve(req, res, local.pathname, quote ? local.search : '')
+    void operation.catch(() => {
       res.statusCode = 502
       res.end('Could not reach the selected API')
     })

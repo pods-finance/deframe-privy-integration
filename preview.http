@@ -1,3 +1,4 @@
+# For dev and preview. Use the browser tester to enter a customer key on staging or production.
 # Run yarn tester first. Set the active target ID (prod, dev, staging, or pr-N) and optional wallet in the REST Client environment.
 @base = http://localhost:5500
 @target = {{$processEnv TESTER_TARGET_ID}}

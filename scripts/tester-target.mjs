@@ -11,7 +11,7 @@ export function resolveTarget(name, pr) {
     return { id: 'pr-' + pr, origin: 'https://pr-' + pr + '.preview.pods.finance' }
   }
   const origin = fixedOrigins.get(name)
-  if (!origin) throw Error('Choose a target: prod, dev, staging, or preview <PR>.')
+  if (!name || !origin) throw Error('Choose a target: prod, dev, staging, or preview <PR>.')
   if (pr !== undefined) throw Error('Only preview accepts a PR number.')
   return { id: name, origin }
 }

@@ -43,6 +43,7 @@ test('launcher and build resolve the same target, including with a saved preview
   assert.throws(() => launchTarget(['other'], saved), /Choose a target/)
 })
 
+let previousTargetCookie = ''
 for (const [index, [id, origin]] of targets.entries()) {
   test('wallets and proxy for ' + id, async t => {
     const port = await availablePort()
@@ -53,6 +54,9 @@ for (const [index, [id, origin]] of targets.entries()) {
     const solana = blank ? '' : getAddressDecoder().decode(bytes)
     const stellar = blank ? '' : StrKey.encodeEd25519PublicKey(bytes)
     const key = 'synthetic-shared-server-key'
+    const manual = id === 'prod' || id === 'staging'
+    const entered = 'synthetic-customer-' + id
+    const expectedKey = manual ? entered : key
     const env = {
       DEFRAME_PREVIEW_PORT: String(port),
       TESTER_EVM_ADDRESS: evm, TESTER_SOLANA_ADDRESS: solana, TESTER_STELLAR_ADDRESS: stellar,
@@ -72,7 +76,10 @@ for (const [index, [id, origin]] of targets.entries()) {
     const upstream = t.mock.method(globalThis, 'fetch', (url, options) => {
       assert.equal(url.origin, origin)
       assert.deepEqual(Object.keys(options.headers), ['x-api-key'])
-      assert.ok(options.headers['x-api-key'] === key, 'Proxy must use the test credential')
+      if (url.pathname === '/customers/by-api-key') {
+        return new Response(null, { status: options.headers['x-api-key'] === entered ? 200 : 401 })
+      }
+      assert.ok(options.headers['x-api-key'] === expectedKey, 'Proxy must use the credential for this target')
       assert.equal(options.redirect, 'error')
       return new Response(url.pathname + url.search)
     })
@@ -93,8 +100,30 @@ for (const [index, [id, origin]] of targets.entries()) {
     const quote = '/v2/swap/quote?amountIn=100'
     const status = '/v2/swap/status/00000000-1234-1234-1234-123456789012'
     const action = '/actions/000000000000000000000001'
+    const endpoint = base + '/tester/customer-key'
+    const headers = { ...client.quoteHeaders, origin: base }
+    let cookie = ''
+    if (manual) {
+      assert.equal((await request(base + quote, { headers })).status, 401)
+      assert.equal((await request(endpoint, { headers: { ...headers, cookie: previousTargetCookie } })).status, 401)
+      const submit = (value, origin = base) => request(endpoint, {
+        method: 'PUT', headers: { ...headers, origin, authorization: 'Bearer ' + value },
+      })
+      assert.equal((await submit(entered, 'https://example.invalid')).status, 403)
+      assert.equal((await submit('invalid-key')).status, 401)
+      assert.equal((await request(endpoint, { headers })).status, 401)
+      const signedIn = await submit(entered)
+      assert.equal(signedIn.status, 204)
+      const setCookie = signedIn.headers.get('set-cookie')
+      assert.ok(setCookie?.includes('HttpOnly') && setCookie.includes('SameSite=Strict') && !setCookie.includes(entered))
+      cookie = setCookie.split(';')[0]
+      assert.equal((await request(endpoint, { headers: { ...headers, cookie } })).status, 204)
+      assert.equal((await request(base + quote, { headers })).status, 401)
+    } else {
+      assert.equal((await request(endpoint, { method: 'PUT', headers: { ...headers, authorization: 'Bearer ' + entered } })).status, 404)
+    }
     for (const path of [quote, status, action]) {
-      const res = await request(base + path, { headers: client.quoteHeaders })
+      const res = await request(base + path, { headers: { ...headers, cookie } })
       assert.equal(res.status, 200)
       assert.equal(await res.text(), path)
     }
@@ -104,7 +133,14 @@ for (const [index, [id, origin]] of targets.entries()) {
       assert.equal((await request(base + quote, options)).status, 403)
     }
     await request(base + '/actions/invalid', { headers: client.quoteHeaders })
-    assert.equal(upstream.mock.callCount(), 3)
+    if (manual) {
+      assert.equal((await request(endpoint, { method: 'DELETE', headers: { ...headers, cookie } })).status, 204)
+      assert.equal((await request(base + quote, { headers: { ...headers, cookie } })).status, 401)
+      // Keep a valid session ID to check that a subsequent target cannot reuse it.
+      const again = await request(endpoint, { method: 'PUT', headers: { ...headers, authorization: 'Bearer ' + entered } })
+      previousTargetCookie = again.headers.get('set-cookie').split(';')[0]
+    }
+    assert.equal(upstream.mock.callCount(), manual ? 6 : 3)
   })
 }
 

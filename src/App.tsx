@@ -1,4 +1,6 @@
-import { targetPath, targetLabel, targetOrigin } from './preview'
+import { Fragment } from 'react'
+import CustomerKeyGate from './components/CustomerKeyGate'
+import { targetPath, targetLabel, targetOrigin, targetId } from './preview'
 import { PrivyProvider } from '@privy-io/react-auth'
 import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana'
 import { SmartWalletsProvider } from '@privy-io/react-auth/smart-wallets';
@@ -8,6 +10,7 @@ import PreviewQuotes from './components/Ramp/PreviewQuotes';
 import YourApp from './components/YourApp';
 import { arbitrum, base, mainnet, optimism, polygon, gnosis, stable, hyperEvm, avalanche, bsc } from 'viem/chains';
 
+const KeyGate = targetId === 'prod' || targetId === 'staging' ? CustomerKeyGate : Fragment
 const solanaConnectors = toSolanaWalletConnectors()
 
 function App() {
@@ -25,31 +28,33 @@ function App() {
   return (
     <>
       <header className="ui-container py-2">API target <strong>{targetLabel}</strong> · <code>{targetOrigin}</code></header>
-      <PrivyProvider appId={privyAppId} config={{
-        externalWallets: { solana: { connectors: solanaConnectors } },
-        embeddedWallets: {
-          ethereum: {
-            createOnLogin: "users-without-wallets",
-          },
-          solana: {
-            createOnLogin: "users-without-wallets",
-          },
-        },
-        // supportedChains: [gnosis],
-        supportedChains: [arbitrum, base, bsc, mainnet, optimism, polygon, gnosis, stable, hyperEvm, avalanche],
-        solana: {
-          rpcs: {
-            'solana:mainnet': {
-              rpc: createSolanaRpc('https://api.mainnet-beta.solana.com'),
-              rpcSubscriptions: createSolanaRpcSubscriptions('wss://api.mainnet-beta.solana.com'),
+      <KeyGate>
+        <PrivyProvider appId={privyAppId} config={{
+          externalWallets: { solana: { connectors: solanaConnectors } },
+          embeddedWallets: {
+            ethereum: {
+              createOnLogin: "users-without-wallets",
+            },
+            solana: {
+              createOnLogin: "users-without-wallets",
             },
           },
-        },
-      }}>
-        <SmartWalletsProvider>
-          {['/', targetPath + '/catalog'].includes(path) ? <BridgeCatalog /> : [targetPath, targetPath + '/forward'].includes(path) ? <PreviewQuotes /> : <YourApp />}
-        </SmartWalletsProvider>
-      </PrivyProvider>
+          // supportedChains: [gnosis],
+          supportedChains: [arbitrum, base, bsc, mainnet, optimism, polygon, gnosis, stable, hyperEvm, avalanche],
+          solana: {
+            rpcs: {
+              'solana:mainnet': {
+                rpc: createSolanaRpc('https://api.mainnet-beta.solana.com'),
+                rpcSubscriptions: createSolanaRpcSubscriptions('wss://api.mainnet-beta.solana.com'),
+              },
+            },
+          },
+        }}>
+          <SmartWalletsProvider>
+            {['/', targetPath + '/catalog'].includes(path) ? <BridgeCatalog /> : [targetPath, targetPath + '/forward'].includes(path) ? <PreviewQuotes /> : <YourApp />}
+          </SmartWalletsProvider>
+        </PrivyProvider>
+      </KeyGate>
     </>
   )
 }

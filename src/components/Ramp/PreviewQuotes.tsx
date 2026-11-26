@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { formatUnits, isAddress, zeroAddress } from 'viem'
-import { previewPr, previewPath, quoteHeaders, testSafe } from '../../preview'
+import { targetOrigin, targetPath, quoteHeaders, testSafe } from '../../preview'
 import { humanToRaw, TOKENS } from './rampRoutes'
 import type { SwapQuote } from '../Swap/useSwap'
 
@@ -15,10 +15,9 @@ const usdAssets = [
   { label: 'USDC · Gnosis', chain: 'gnosis', token: TOKENS.usdc.gnosis },
   { label: 'USDT0 · Stable', chain: 'stable', token: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736' },
 ]
-const reverse = window.location.pathname !== previewPath + '/forward'
+const reverse = window.location.pathname !== targetPath + '/forward'
 const sources = reverse ? usdAssets.map(asset => ({ ...asset, amount: '2000000' })) : brlSources
 const destinations = reverse ? brlSources.filter(asset => asset.chain !== 'fiat') : usdAssets
-const preview = `https://pr-${previewPr}.preview.pods.finance`
 
 export default function PreviewQuotes() {
   const { ready, authenticated, login } = usePrivy()
@@ -47,7 +46,7 @@ export default function PreviewQuotes() {
         || q.originAddress?.toLowerCase() !== wallet.toLowerCase() || q.destinationAddress?.toLowerCase() !== wallet.toLowerCase()
         || !['deframe', 'pods'].includes(q.provider) || !q.id || q.originChain !== source.chain || q.destinationChain !== destination.chain
         || q.tokenIn.contract.toLowerCase() !== source.token.toLowerCase() || q.tokenOut.contract.toLowerCase() !== destination.token.toLowerCase()
-        || q.tokenIn.amount !== depositRaw || BigInt(q.tokenOut.amount) <= 0n || !(deadline.getTime() > Date.now())) throw Error('The preview did not return matching deposit instructions.')
+        || q.tokenIn.amount !== depositRaw || BigInt(q.tokenOut.amount) <= 0n || !(deadline.getTime() > Date.now())) throw Error('The API did not return matching deposit instructions.')
       setInstructions({ route: id, address, amount: depositAmount, deadline, quoteId: q.id, output: formatUnits(BigInt(q.tokenOut.amount), q.tokenOut.decimals) })
       setResponses(previous => ({ ...previous, [id]: '' }))
     } catch (e) {
@@ -71,9 +70,9 @@ export default function PreviewQuotes() {
   }
   return <main className="ui-page ui-surface-warm min-h-screen py-10">
     <section className="ui-container flex flex-col gap-5">
-      <nav aria-label="Preview tools" className="flex gap-2"><a className="ui-btn-tab" href={previewPath + '/catalog'}>Route tester</a><a className="ui-btn-tab" href={previewPath}>USD → BRL quotes</a><a className="ui-btn-tab" href={previewPath + '/forward'}>BRL → USD quotes</a><a className="ui-btn-tab" href={previewPath + '/swap'}>Bridge swap</a><a className="ui-btn-tab" href={previewPath + '/pix'}>Pix ramps</a><a className="ui-btn-tab" href={previewPath + '/ramp'}>Ramp catalog</a><a className="ui-btn-tab" href={previewPath + '/custom'}>Custom swap</a></nav>
-      <h1 className="ui-heading-section">{reverse ? 'USD → BRL' : 'BRL → USD'} preview quotes</h1>
-      {reverse ? <p>PR #{previewPr} · Each quote uses 2 units of the input token.</p> : <p>PR #{previewPr} · One unit per input. Each click requests a fresh five-minute quote. Pix can return unpaid payment instructions.</p>}
+      <nav aria-label="Tester tools" className="flex gap-2"><a className="ui-btn-tab" href={targetPath + '/catalog'}>Route tester</a><a className="ui-btn-tab" href={targetPath}>USD → BRL quotes</a><a className="ui-btn-tab" href={targetPath + '/forward'}>BRL → USD quotes</a><a className="ui-btn-tab" href={targetPath + '/swap'}>Bridge swap</a><a className="ui-btn-tab" href={targetPath + '/pix'}>Pix ramps</a><a className="ui-btn-tab" href={targetPath + '/ramp'}>Ramp catalog</a><a className="ui-btn-tab" href={targetPath + '/custom'}>Custom swap</a></nav>
+      <h1 className="ui-heading-section">{reverse ? 'USD → BRL' : 'BRL → USD'} quotes</h1>
+      {reverse ? <p>Each quote uses 2 units of the input token.</p> : <p>One unit per input. Each click requests a fresh five-minute quote. Pix can return unpaid payment instructions.</p>}
       <label>{reverse ? 'Funding and receiving EVM wallet' : 'Pix destination wallet (BRL KYC)'}
         <input className="ui-input w-full" value={wallet} disabled={Boolean(pending)} onChange={event => { setWallet(event.target.value.trim()); setInstructions(undefined) }} />
       </label>
@@ -98,7 +97,7 @@ export default function PreviewQuotes() {
             <p>Receive {instructions.output} {destination.label} at {wallet}.</p>
             <p>Quote {instructions.quoteId} · Rate locked until {instructions.deadline.toLocaleString()}. Request a fresh deposit address if this time has passed.</p>
           </div>}
-          <details><summary>Request</summary><code className="break-all">GET {preview}/v2/swap/quote?{params.toString()}</code></details>
+          <details><summary>Request</summary><code className="break-all">GET {targetOrigin}/v2/swap/quote?{params.toString()}</code></details>
           {responses[id] && <pre className="overflow-auto max-h-80" aria-live="polite">{responses[id]}</pre>}
         </section>
       }))}

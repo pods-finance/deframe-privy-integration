@@ -10,7 +10,7 @@ export function readEvmPixDeposit(body: Record<string, unknown>, chainName: stri
     quote?.provider !== 'avenia' || !quote.quoteId || asRecord(quote.tokenOut)?.decimals !== 2 ||
     typeof address !== 'string' || !isAddress(address) || !isAddress(wallet) || !isAddress(token) ||
     isAddressEqual(address, zeroAddress) || isAddressEqual(address, wallet) || isAddressEqual(address, token)) {
-    throw Error('The preview did not return a valid Pix deposit address on the selected network. Request a fresh quote.')
+    throw Error('The API did not return a valid Pix deposit address on the selected network. Request a fresh quote.')
   }
   // The tracked wallet batch can pay a different recipient. A plain deposit uses the explicit quote address.
   const data = encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [address, BigInt(amountIn)] })

@@ -60,7 +60,7 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
   if (prepareSolana) {
     const encoded = readString(asRecord(body?.transactionData)?.rawTransaction)
     const quoteId = readString(quote.id) ?? readString(quote.quoteId)
-    if (!encoded || !quoteId) throw Error('The preview did not return deposit instructions. Request a new quote.')
+    if (!encoded || !quoteId) throw Error('The API did not return deposit instructions. Request a new quote.')
     const { readSolanaPixDeposit } = await import('./solanaPixDeposit')
     deposit = readSolanaPixDeposit(encoded, wallet, asset.token, amountIn, quoteId)
   }

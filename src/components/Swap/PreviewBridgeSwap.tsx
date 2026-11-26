@@ -26,13 +26,13 @@ async function prepare(route: typeof routes[number], amount: string, sender: str
     destinationChain: to.chain, tokenOut: to.token, originAddress: sender, destinationAddress: recipient, preferredProvider: 'pods' })
   const res = await fetch('/v2/swap/quote?' + search.toString(), { headers: quoteHeaders, cache: 'no-store', signal: AbortSignal.timeout(60000) })
   const body = await parseResponseBody(res)
-  if (!res.ok) throw Error(readString(asRecord(asRecord(body)?.error)?.message) ?? 'Preview quote failed (HTTP ' + String(res.status) + ')')
+  if (!res.ok) throw Error(readString(asRecord(asRecord(body)?.error)?.message) ?? 'Quote failed (HTTP ' + String(res.status) + ')')
   const { quote, chainId, transactionData } = body as SwapQuoteResponse
   if (quote.originChain !== from.chain || quote.destinationChain !== to.chain || quote.tokenIn.contract.toLowerCase() !== from.token.toLowerCase()
     || quote.tokenOut.contract.toLowerCase() !== to.token.toLowerCase() || quote.tokenIn.amount !== amount || !quote.quoteId
     || readString(quote.originAddress)?.toLowerCase() !== sender.toLowerCase() || readString(quote.destinationAddress)?.toLowerCase() !== recipient.toLowerCase()
     || !['pods', 'deframe'].includes(quote.provider) || BigInt(quote.tokenOut.amount) <= 0n || Number(chainId) !== from.id
-    || !Array.isArray(transactionData) || !transactionData.length) throw Error('The preview did not return the selected bridge swap.')
+    || !Array.isArray(transactionData) || !transactionData.length) throw Error('The API did not return the selected bridge swap.')
   const calls = transactionData.map(tx => {
     if (Number(tx.chainId) !== from.id || !isAddress(tx.to) || !isHex(tx.data) || BigInt(tx.value) !== 0n) throw Error('Unexpected origin transaction in quote.')
     return { to: tx.to, data: tx.data, value: 0n }

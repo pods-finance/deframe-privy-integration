@@ -5,6 +5,7 @@ import test from 'node:test'
 import { getAddressDecoder } from '@solana/kit'
 import { StrKey } from '@stellar/stellar-sdk'
 import { createServer } from 'vite'
+import { launchTarget, targetForMode } from './tester-target.mjs'
 
 async function availablePort() {
   const listener = net.createServer()
@@ -15,20 +16,47 @@ async function availablePort() {
   return port
 }
 
-for (const [index, pr] of ['3500', '3561', '9999'].entries()) {
-  test('preview selection, wallets and proxy for PR ' + pr, async t => {
+const targets = [
+  ['prod', 'https://api.pods.finance'],
+  ['dev', 'https://dev-api.pods.finance'],
+  ['staging', 'https://staging-api.pods.finance'],
+  ['pr-3500', 'https://pr-3500.preview.pods.finance'],
+  ['pr-3561', 'https://pr-3561.preview.pods.finance'],
+  ['pr-9999', 'https://pr-9999.preview.pods.finance'],
+]
+
+test('launcher and build resolve the same target, including with a saved preview PR', () => {
+  const saved = { DEFRAME_TARGET: 'preview', DEFRAME_PREVIEW_PR: '3500' }
+  for (const [id, origin] of targets) {
+    const args = id.startsWith('pr-') ? ['preview', id.slice(3)] : [id]
+    assert.deepEqual(launchTarget(args, saved), { id, origin })
+    assert.deepEqual(targetForMode(id, saved), { id, origin })
+  }
+  assert.equal(launchTarget([], saved).id, 'pr-3500')
+  assert.equal(launchTarget(['3561'], saved).id, 'pr-3561')
+  assert.equal(launchTarget([], { ...saved, DEFRAME_TARGET: 'dev' }).id, 'dev')
+  for (const args of [['preview'], ['preview', '0'], ['preview', '-1'], ['preview', '1.5'], ['preview', '1/path']]) {
+    assert.throws(() => launchTarget(args, saved), /positive integer/)
+  }
+  assert.throws(() => launchTarget([], { DEFRAME_TARGET: 'preview' }), /positive integer/)
+  assert.throws(() => launchTarget(['prod', '3500'], saved), /Only preview/)
+  assert.throws(() => launchTarget(['other'], saved), /Choose a target/)
+})
+
+for (const [index, [id, origin]] of targets.entries()) {
+  test('wallets and proxy for ' + id, async t => {
     const port = await availablePort()
     const base = 'http://localhost:' + port
-    const blank = pr === '9999'
+    const blank = id === 'pr-9999'
     const bytes = Buffer.alloc(32, index + 1)
     const evm = blank ? '' : '0x' + bytes.subarray(0, 20).toString('hex')
     const solana = blank ? '' : getAddressDecoder().decode(bytes)
     const stellar = blank ? '' : StrKey.encodeEd25519PublicKey(bytes)
-    const key = 'synthetic-key-for-test-' + pr
+    const key = 'synthetic-shared-server-key'
     const env = {
-      DEFRAME_PREVIEW_PR: pr, DEFRAME_PREVIEW_PORT: String(port),
+      DEFRAME_PREVIEW_PORT: String(port),
       TESTER_EVM_ADDRESS: evm, TESTER_SOLANA_ADDRESS: solana, TESTER_STELLAR_ADDRESS: stellar,
-      DEFRAME_PREVIEW_API_KEY: key, VITE_APP_DEFRAME_API_KEY: key, VITE_APP_HELIUS_API_KEY: key,
+      DEFRAME_API_KEY: key, VITE_APP_DEFRAME_API_KEY: key, VITE_APP_HELIUS_API_KEY: key,
       VITE_APP_PRIVY_APP_ID: 'test-app',
     }
     for (const [name, value] of Object.entries(env)) {
@@ -36,25 +64,27 @@ for (const [index, pr] of ['3500', '3561', '9999'].entries()) {
       process.env[name] = value
       t.after(() => { if (prior === undefined) delete process.env[name]; else process.env[name] = prior })
     }
-    const server = await createServer({ mode: 'pr-' + pr, logLevel: 'error',
+    const server = await createServer({ mode: id, logLevel: 'error',
       optimizeDeps: { noDiscovery: true, include: [] } })
     t.after(() => server.close())
     await server.listen()
     const request = globalThis.fetch
     const upstream = t.mock.method(globalThis, 'fetch', (url, options) => {
-      assert.equal(url.origin, 'https://pr-' + pr + '.preview.pods.finance')
-      assert.deepEqual(options.headers, { 'x-api-key': key })
+      assert.equal(url.origin, origin)
+      assert.deepEqual(Object.keys(options.headers), ['x-api-key'])
+      assert.ok(options.headers['x-api-key'] === key, 'Proxy must use the test credential')
       assert.equal(options.redirect, 'error')
       return new Response(url.pathname + url.search)
     })
 
     const client = await server.ssrLoadModule('/src/preview.ts')
-    assert.equal(client.previewPath, '/pr-' + pr)
-    assert.deepEqual(client.quoteHeaders, { 'x-preview-quote': pr })
+    assert.equal(client.targetPath, '/' + id)
+    assert.equal(client.targetOrigin, origin)
+    assert.deepEqual(client.quoteHeaders, { 'x-deframe-target': id })
     assert.deepEqual(['gnosis', 'solana', 'stellar', 'fiat'].map(client.configuredWallet), [evm, solana, stellar, ''])
     const catalog = await server.ssrLoadModule('/src/components/BridgeCatalog/catalog.ts')
-    assert.equal(catalog.catalogPr, pr === '3561' ? pr : '3500')
-    assert.equal('base/EURC' in catalog.assets, pr === '3561')
+    assert.equal(catalog.catalogPr, id === 'pr-3561' ? '3561' : '3500')
+    assert.equal('base/EURC' in catalog.assets, id === 'pr-3561')
     const { deframeApiHeaders } = await server.ssrLoadModule('/src/components/Ramp/rampApi.ts')
     assert.deepEqual(deframeApiHeaders(), client.quoteHeaders)
     const source = await (await request(base + '/src/preview.ts')).text()
@@ -68,7 +98,7 @@ for (const [index, pr] of ['3500', '3561', '9999'].entries()) {
       assert.equal(res.status, 200)
       assert.equal(await res.text(), path)
     }
-    for (const options of [{}, { headers: { 'x-preview-quote': '1' } },
+    for (const options of [{}, { headers: { 'x-deframe-target': 'other' } },
       { headers: { ...client.quoteHeaders, origin: 'http://example.invalid' } },
       { method: 'POST', headers: client.quoteHeaders }]) {
       assert.equal((await request(base + quote, options)).status, 403)
@@ -90,11 +120,14 @@ test('manual Stellar Pix instructions require the quote-specific muxed deposit',
     .addOperation(Operation.payment({ destination: depositAddress, amount: '1', asset: new Asset('USDC', issuer) }))
     .addMemo(Memo.id(muxId)).setTimeout(60).build()
   const body = { amount: '1', depositAddress, muxId, xdrUnsigned: tx.toXDR() }
-  // Vite only needs a preview number to load the client parser.
-  const oldPr = process.env.DEFRAME_PREVIEW_PR
-  process.env.DEFRAME_PREVIEW_PR = '1'
-  t.after(() => { if (oldPr === undefined) delete process.env.DEFRAME_PREVIEW_PR; else process.env.DEFRAME_PREVIEW_PR = oldPr })
-  const server = await createServer({ server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true, include: [] } })
+  const oldKey = process.env.DEFRAME_API_KEY, oldApp = process.env.VITE_APP_PRIVY_APP_ID
+  process.env.DEFRAME_API_KEY = 'synthetic-server-key'
+  process.env.VITE_APP_PRIVY_APP_ID = 'test-app'
+  t.after(() => {
+    if (oldKey === undefined) delete process.env.DEFRAME_API_KEY; else process.env.DEFRAME_API_KEY = oldKey
+    if (oldApp === undefined) delete process.env.VITE_APP_PRIVY_APP_ID; else process.env.VITE_APP_PRIVY_APP_ID = oldApp
+  })
+  const server = await createServer({ mode: 'dev', server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true, include: [] } })
   t.after(() => server.close())
   const { readStellarPixDeposit } = await server.ssrLoadModule('/src/components/Ramp/stellarPixDeposit.ts')
   const read = data => readStellarPixDeposit(data, quoteId, funding, 'USDC:' + issuer, '10000000')

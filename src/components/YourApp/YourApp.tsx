@@ -1,4 +1,4 @@
-import { previewPath } from '../../preview';
+import { targetPath } from '../../preview';
 import { usePrivy } from '@privy-io/react-auth';
 import { useState } from 'react';
 import Auth from '../Auth';
@@ -96,7 +96,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 const YourApp = () => {
   const { ready, authenticated, user, logout } = usePrivy();
-  const routes: Record<string, Tab> = { [previewPath + '/pix']: 'pix-onramp', [previewPath + '/ramp']: 'ramp', [previewPath + '/custom']: 'swap' };
+  const routes: Record<string, Tab> = { [targetPath + '/pix']: 'pix-onramp', [targetPath + '/ramp']: 'ramp', [targetPath + '/custom']: 'swap' };
   const [activeTab, setActiveTab] = useState<Tab>(routes[window.location.pathname] ?? 'bridge-swap');
 
   if (!ready) {
@@ -119,7 +119,7 @@ const YourApp = () => {
             Hello {user?.email?.address ?? 'User'}
           </p>
           <nav className="flex flex-wrap items-center gap-2">
-            <a className="ui-btn-tab ui-btn-tab-inverse" href={previewPath + '/catalog'}>Route tester</a>
+            <a className="ui-btn-tab ui-btn-tab-inverse" href={targetPath + '/catalog'}>Route tester</a>
             {TABS.map(({ id, label }) => (
               <button
                 key={id}

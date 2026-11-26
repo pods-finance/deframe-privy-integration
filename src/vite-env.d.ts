@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 interface ImportMetaEnv {
-  readonly VITE_PIX_PREVIEW: string;
+  readonly TESTER_TARGET: string;
+  readonly TESTER_API_ORIGIN: string;
   readonly TESTER_EVM_ADDRESS: string;
   readonly TESTER_SOLANA_ADDRESS: string;
   readonly TESTER_STELLAR_ADDRESS: string;

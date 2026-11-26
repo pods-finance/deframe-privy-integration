@@ -6,7 +6,7 @@ import { isAddress as isSolanaAddress } from '@solana/kit'
 import { QRCode } from 'react-qr-code'
 import { asRecord, extractApiError, parseResponseBody, readString } from '../Ramp/rampApi'
 import { humanToRaw } from '../Ramp/rampRoutes'
-import { configuredWallet, previewPath, quoteHeaders, testSafe } from '../../preview'
+import { configuredWallet, targetPath, quoteHeaders, testSafe } from '../../preview'
 import { assets, label, quoteParams, type Selection } from './catalog'
 
 function isEvm(chain: string) {
@@ -129,11 +129,11 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
         {row.to === 'fiat/BRL' && <label className="ui-label">Pix payout key (optional)<input className="ui-input w-full" value={pixKey} onChange={e => { clear(); setPixKey(e.target.value) }} /></label>}
       </>}
     </fieldset>
-    <button className="ui-btn-primary self-start" disabled={busy || !enabled}>{busy ? 'Requesting quote…' : 'Get preview quote'}</button>
+    <button className="ui-btn-primary self-start" disabled={busy || !enabled}>{busy ? 'Requesting quote…' : 'Get quote'}</button>
     {result && <div className="ui-sub-panel space-y-2 break-words" role="status">
       <strong>{result.message}</strong>
       {result.id && result.expires && <p>Quote {result.id} · {expired ? 'Expired' : 'Valid until ' + new Date(result.expires).toLocaleTimeString()}</p>}
-      {result.success && walletSwap && <a className="ui-btn-tab" href={previewPath + '/swap?' + swapParams.toString()}>Open this route in Bridge swap</a>}
+      {result.success && walletSwap && <a className="ui-btn-tab" href={targetPath + '/swap?' + swapParams.toString()}>Open this route in Bridge swap</a>}
       {!expired && result.deposit && <p>Send {amount} {label(row.from)} to <code className="break-all">{result.deposit}</code>. Receive at <code className="break-all">{recipient}</code>.</p>}
       {!expired && result.pixCode && <div><p>{row.provider === 'avenia' ? 'Sandbox Pix payment code' : 'Pix payment code'}</p><QRCode value={result.pixCode} size={144} /><details><summary>Copy-and-paste code</summary><code className="break-all">{result.pixCode}</code></details></div>}
     </div>}

@@ -1,6 +1,8 @@
-export const previewPr = import.meta.env.VITE_PIX_PREVIEW
-export const previewPath = `/pr-${previewPr}`
-export const quoteHeaders = { 'x-preview-quote': previewPr }
+export const targetId = import.meta.env.TESTER_TARGET
+export const targetOrigin = import.meta.env.TESTER_API_ORIGIN
+export const targetLabel = targetId.startsWith('pr-') ? 'Preview PR #' + targetId.slice(3) : targetId
+export const targetPath = '/' + targetId
+export const quoteHeaders = { 'x-deframe-target': targetId }
 export const testSafe = import.meta.env.TESTER_EVM_ADDRESS
 export const nativeWallets = {
   solana: import.meta.env.TESTER_SOLANA_ADDRESS,

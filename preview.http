@@ -1,28 +1,28 @@
-# Run yarn tester first. Set the PR and optional wallet in the REST Client environment.
+# Run yarn tester first. Set the active target ID (prod, dev, staging, or pr-N) and optional wallet in the REST Client environment.
 @base = http://localhost:5500
-@pr = {{$processEnv DEFRAME_PREVIEW_PR}}
+@target = {{$processEnv TESTER_TARGET_ID}}
 @pixWallet = {{$processEnv TESTER_EVM_ADDRESS}}
 
 ### 1 pix-brl → usdc-gnosis
 GET {{base}}/v2/swap/quote?originChain=fiat&tokenIn=BRL&amountIn=100&destinationChain=gnosis&tokenOut=0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0&preferredProvider=pods&destinationAddress={{pixWallet}}
-x-preview-quote: {{pr}}
+x-deframe-target: {{target}}
 
 ### 1 pix-brl → usdt0-stable
 GET {{base}}/v2/swap/quote?originChain=fiat&tokenIn=BRL&amountIn=100&destinationChain=stable&tokenOut=0x779Ded0c9e1022225f8E0630b35a9b54bE713736&preferredProvider=pods&destinationAddress={{pixWallet}}
-x-preview-quote: {{pr}}
+x-deframe-target: {{target}}
 
 ### 1 brla-polygon → usdc-gnosis
 GET {{base}}/v2/swap/quote?originChain=polygon&tokenIn=0xE6A537a407488807F0bbeb0038B79004f19DDDFb&amountIn=1000000000000000000&destinationChain=gnosis&tokenOut=0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0&preferredProvider=pods
-x-preview-quote: {{pr}}
+x-deframe-target: {{target}}
 
 ### 1 brla-polygon → usdt0-stable
 GET {{base}}/v2/swap/quote?originChain=polygon&tokenIn=0xE6A537a407488807F0bbeb0038B79004f19DDDFb&amountIn=1000000000000000000&destinationChain=stable&tokenOut=0x779Ded0c9e1022225f8E0630b35a9b54bE713736&preferredProvider=pods
-x-preview-quote: {{pr}}
+x-deframe-target: {{target}}
 
 ### 1 brs-base → usdc-gnosis
 GET {{base}}/v2/swap/quote?originChain=base&tokenIn=0x0000006238e3C7797Ae71827da303560bae1B125&amountIn=1000000&destinationChain=gnosis&tokenOut=0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0&preferredProvider=pods
-x-preview-quote: {{pr}}
+x-deframe-target: {{target}}
 
 ### 1 brs-base → usdt0-stable
 GET {{base}}/v2/swap/quote?originChain=base&tokenIn=0x0000006238e3C7797Ae71827da303560bae1B125&amountIn=1000000&destinationChain=stable&tokenOut=0x779Ded0c9e1022225f8E0630b35a9b54bE713736&preferredProvider=pods
-x-preview-quote: {{pr}}
+x-deframe-target: {{target}}

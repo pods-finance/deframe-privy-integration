@@ -3,12 +3,6 @@ import { asRecord, deframeApiHeaders, deframeApiUrl, parseResponseBody, readStri
 import { assets } from '../BridgeCatalog/catalog'
 import { readEvmPixDeposit } from './evmPixDeposit'
 
-export const PIX_TEST_SAFE = '0xBDFfcEF09a027BfA147E11D2e240853914Fc210a'
-export const pixNativeWallets = {
-  solana: 'EDGGGTA5Ee5Dv7bncqt6ry2SRKaQmJ72BzVZVP3QYSLm',
-  stellar: 'GDBOIPKDQA6MHGDHZ6YMWBZKGKESLVY4RYIVKUSMOAJ3O6NMB5X3HCAF',
-} as const
-
 function pixAsset(chain: string, symbol: string, offramp = true) {
   const { contract: token, decimals } = assets[chain + '/' + symbol]
   const walletNetwork = chain === 'solana' || chain === 'stellar' ? chain : 'evm'
@@ -36,10 +30,9 @@ export async function getPixQuote(onramp: boolean, asset: typeof pixAssets[numbe
     if (!pixKey?.trim()) throw Error('Enter the Pix key that will receive the payout.')
     params.set('pixKey', pixKey.trim())
   }
-  const preview = import.meta.env.VITE_PIX_PREVIEW === '3500'
-  const url = preview ? new URL('/preview-3500-quote', window.location.origin) : deframeApiUrl('/v2/swap/quote')
+  const url = deframeApiUrl('/v2/swap/quote')
   url.search = params.toString()
-  const headers = preview ? { 'x-preview-quote': '3500' } : deframeApiHeaders()
+  const headers = deframeApiHeaders()
   const response = await fetch(url, { headers, cache: 'no-store', signal: AbortSignal.timeout(60000) })
   const body = asRecord(await parseResponseBody(response))
   const quote = asRecord(body?.quote)

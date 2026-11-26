@@ -1,5 +1,6 @@
+import { quoteHeaders } from '../../preview'
 const API_BASE = import.meta.env.VITE_APP_DEFRAME_API_URL || 'http://localhost:4001'
-const API_KEY = import.meta.env.VITE_APP_DEFRAME_API_KEY || ''
+
 
 export interface RampApiError {
   code?: string
@@ -14,9 +15,7 @@ export interface RampApiResult<T = unknown> {
 }
 
 export function deframeApiHeaders(jsonBody = false): Record<string, string> {
-  const headers: Record<string, string> = {}
-  if (import.meta.env.VITE_PIX_PREVIEW === '3500') headers['x-preview-quote'] = '3500'
-  if (API_KEY) headers['x-api-key'] = API_KEY
+  const headers: Record<string, string> = { ...quoteHeaders }
   if (jsonBody) headers['Content-Type'] = 'application/json'
   return headers
 }

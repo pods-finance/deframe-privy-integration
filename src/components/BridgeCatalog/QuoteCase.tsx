@@ -2,14 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { formatUnits, isAddress } from 'viem'
+import { isAddress as isSolanaAddress } from '@solana/kit'
 import { QRCode } from 'react-qr-code'
 import { asRecord, extractApiError, parseResponseBody, readString } from '../Ramp/rampApi'
 import { humanToRaw } from '../Ramp/rampRoutes'
-import { PIX_TEST_SAFE } from '../Ramp/pixQuote'
+import { configuredWallet, previewPath, quoteHeaders, testSafe } from '../../preview'
 import { assets, label, quoteParams, type Selection } from './catalog'
 
 function isEvm(chain: string) {
   return !['fiat', 'solana', 'stellar'].includes(chain)
+}
+
+function validAddress(chain: string, address: string) {
+  if (chain === 'fiat') return true
+  if (chain === 'solana') return isSolanaAddress(address)
+  if (chain === 'stellar') return /^G[A-Z2-7]{55}$/.test(address)
+  return isAddress(address)
 }
 
 function WalletField({ title, chain, value, change }: { title: string; chain: string; value: string; change: (v: string) => void }) {
@@ -21,7 +29,7 @@ function WalletField({ title, chain, value, change }: { title: string; chain: st
       <input className="ui-input w-full" value={value} required onChange={e => { change(e.target.value.trim()); }} />
     </label>
     {isEvm(chain) && <div className="flex flex-wrap gap-2">
-      <button type="button" className="ui-btn-tab" onClick={() => { change(PIX_TEST_SAFE); }}>Test Safe · 210a</button>
+      {testSafe && <button type="button" className="ui-btn-tab" onClick={() => { change(testSafe); }}>Configured Safe · {testSafe.slice(-4)}</button>}
       {client ? <button type="button" className="ui-btn-tab" onClick={() => { change(client.account.address); }}>Use Privy wallet</button>
         : !authenticated && <button type="button" className="ui-btn-tab" disabled={!ready} onClick={login}>Connect Privy</button>}
     </div>}
@@ -46,8 +54,8 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
   const input = assets[row.from], output = assets[row.to]
   const [amount, setAmount] = useState('1')
   const [bound, setBound] = useState(false)
-  const [sender, setSender] = useState<string>(() => isEvm(input.chain) ? PIX_TEST_SAFE : '')
-  const [recipient, setRecipient] = useState<string>(() => isEvm(output.chain) ? PIX_TEST_SAFE : '')
+  const [sender, setSender] = useState<string>(() => configuredWallet(input.chain))
+  const [recipient, setRecipient] = useState<string>(() => configuredWallet(output.chain))
   const [pixKey, setPixKey] = useState('')
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Result>()
@@ -66,7 +74,6 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
   if (bound && input.chain !== 'fiat') params.set('originAddress', sender)
   if (bound && output.chain !== 'fiat') params.set('destinationAddress', recipient)
   if (bound && row.to === 'fiat/BRL' && pixKey) params.set('pixKey', pixKey)
-  const validAddress = (chain: string, address: string) => chain === 'fiat' || (isEvm(chain) ? isAddress(address) : Boolean(address))
   const enabled = !!raw && BigInt(raw) > 0n && (!bound || (validAddress(input.chain, sender) && validAddress(output.chain, recipient)))
 
   const reverse = reverseSources.includes(row.from) && reverseTargets.includes(row.to)
@@ -80,7 +87,7 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
     const controller = new AbortController()
     active.current = controller
     try {
-      const res = await fetch('/preview-3500-quote?' + params.toString(), { headers: { 'x-preview-quote': '3500' }, cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(60000)]) })
+      const res = await fetch('/v2/swap/quote?' + params.toString(), { headers: quoteHeaders, cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(60000)]) })
       const body = asRecord(await parseResponseBody(res))
       if (!res.ok) {
         const e = extractApiError(body)
@@ -126,7 +133,7 @@ export default function QuoteCase({ row, mark }: { row: Selection; mark: (id: st
     {result && <div className="ui-sub-panel space-y-2 break-words" role="status">
       <strong>{result.message}</strong>
       {result.id && result.expires && <p>Quote {result.id} · {expired ? 'Expired' : 'Valid until ' + new Date(result.expires).toLocaleTimeString()}</p>}
-      {result.success && walletSwap && <a className="ui-btn-tab" href={'/pr-3500/swap?' + swapParams.toString()}>Open this route in Bridge swap</a>}
+      {result.success && walletSwap && <a className="ui-btn-tab" href={previewPath + '/swap?' + swapParams.toString()}>Open this route in Bridge swap</a>}
       {!expired && result.deposit && <p>Send {amount} {label(row.from)} to <code className="break-all">{result.deposit}</code>. Receive at <code className="break-all">{recipient}</code>.</p>}
       {!expired && result.pixCode && <div><p>{row.provider === 'avenia' ? 'Sandbox Pix payment code' : 'Pix payment code'}</p><QRCode value={result.pixCode} size={144} /><details><summary>Copy-and-paste code</summary><code className="break-all">{result.pixCode}</code></details></div>}
     </div>}

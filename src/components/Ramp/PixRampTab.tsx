@@ -1,3 +1,4 @@
+import { nativeWallets, testSafe } from '../../preview'
 import { useEffect, useRef, useState } from 'react'
 import { useConnectWallet, usePrivy, useWallets as useEvmWallets } from '@privy-io/react-auth'
 import { useSignRawHash } from '@privy-io/react-auth/extended-chains'
@@ -7,13 +8,14 @@ import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { QRCode } from 'react-qr-code'
 import { createWalletClient, custom, isAddress } from 'viem'
 import { humanToRaw } from './rampRoutes'
-import { getPixQuote, pixAssets, pixNativeWallets, PIX_TEST_SAFE } from './pixQuote'
+import { getPixQuote, pixAssets } from './pixQuote'
 
 function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: string }) {
-  const [evmWallet, setEvmWallet] = useState(onramp ? privyWallet ?? PIX_TEST_SAFE : PIX_TEST_SAFE)
+  const [evmWallet, setEvmWallet] = useState(onramp ? privyWallet ?? testSafe : testSafe || (privyWallet ?? ''))
   const assets = pixAssets.filter(a => onramp || a.offramp)
   const [asset, setAsset] = useState(assets[0])
-  const wallet = asset.walletNetwork === 'evm' ? evmWallet : pixNativeWallets[asset.walletNetwork]
+  const [native, setNative] = useState(nativeWallets)
+  const wallet = asset.walletNetwork === 'evm' ? evmWallet : native[asset.walletNetwork]
   const [amount, setAmount] = useState('1')
   const [pixKey, setPixKey] = useState('')
   const needsDeposit = !onramp
@@ -45,6 +47,14 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
     } else if (!result && !busy) setEvmWallet(connected.address)
   } })
   const { user } = usePrivy()
+  const linkedStellar = user?.linkedAccounts.flatMap(a =>
+    a.type === 'wallet' && a.chainType === 'stellar' ? [a.address] : []) ?? []
+  const solanaAddresses = new Set([nativeWallets.solana, ...wallets.map(w => w.address)].filter(Boolean))
+  const stellarAddresses = new Set([nativeWallets.stellar, ...linkedStellar].filter(Boolean))
+  const walletOptions = [
+    ...Array.from(solanaAddresses, address => ({ network: 'solana' as const, address })),
+    ...Array.from(stellarAddresses, address => ({ network: 'stellar' as const, address })),
+  ]
   const stellarSigning = useSignRawHash()
   const [trustlineReady, setTrustlineReady] = useState(false)
   const [trustlineError, setTrustlineError] = useState('')
@@ -81,7 +91,7 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
   const normalized = amount.trim().replace(',', '.')
   const raw = /^\d+(\.\d+)?$/.test(normalized) ? humanToRaw(normalized, onramp ? 2 : asset.decimals) : null
   async function prepare() {
-    if (!raw || busy) return
+    if (!wallet || !raw || busy) return
     setError(''); setBusy(true); setCopied(false)
     try {
       const quote = await getPixQuote(onramp, asset, raw, wallet, pixKey)
@@ -229,22 +239,27 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
         {onramp && <p>Origin: Pix (BRL)</p>}
         <label className="ui-label">{onramp ? 'Destination wallet' : 'Origin wallet'}
           <select className="ui-select mt-1" value={wallet} onChange={e => {
+            setTrustlineReady(false); setTrustlineError('')
             const address = e.target.value
-            const network = address === pixNativeWallets.solana ? 'solana' : address === pixNativeWallets.stellar ? 'stellar' : 'evm'
+            const network = walletOptions.find(option => option.address === address)?.network ?? 'evm'
             if (network === 'evm') setEvmWallet(address)
+            else setNative(previous => ({ ...previous, [network]: address }))
             const nextAsset = assets.find(a => a.walletNetwork === network)
             if (nextAsset && network !== asset.walletNetwork) setAsset(nextAsset)
             setError('')
           }}>
-            {privyWallet && privyWallet.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={privyWallet}>My Privy wallet ({privyWallet.slice(0, 6)}…{privyWallet.slice(-4)})</option>}
-            <option value={PIX_TEST_SAFE}>Test Safe (0xBDFf…210a)</option>
-            {(!onramp ? evmWallets : []).filter(w => ![privyWallet?.toLowerCase(), PIX_TEST_SAFE.toLowerCase()].includes(w.address.toLowerCase())).map(w =>
+            {!wallet && <option value="" disabled>Select a wallet</option>}
+            {privyWallet && privyWallet.toLowerCase() !== testSafe.toLowerCase() && <option value={privyWallet}>My Privy wallet ({privyWallet.slice(0, 6)}…{privyWallet.slice(-4)})</option>}
+            {testSafe && <option value={testSafe}>Configured Safe ({testSafe.slice(0, 6)}…{testSafe.slice(-4)})</option>}
+            {(!onramp ? evmWallets : []).filter(w => ![privyWallet?.toLowerCase(), testSafe.toLowerCase()].includes(w.address.toLowerCase())).map(w =>
               <option key={w.address} value={w.address}>Connected wallet ({w.address.slice(0, 6)}…{w.address.slice(-4)})</option>)}
-            {Object.entries(pixNativeWallets).map(([network, address]) => <option key={network} value={address}>
+            {walletOptions.map(({ network, address }) => <option key={address} value={address}>
               My {network === 'solana' ? 'Solana' : 'Stellar'} wallet ({address.slice(0, 4)}…{address.slice(-4)})
             </option>)}
           </select>
         </label>
+        {!wallet && <p>Select a connected wallet or set the matching TESTER address in .env and restart.</p>}
+        {asset.walletNetwork === 'solana' && !wallets.length && <button type="button" className="ui-btn-secondary" onClick={() => { connectWallet({ walletChainType: 'solana-only' }) }}>Connect Solana wallet</button>}
         {evmOfframp && <button type="button" className="ui-btn-secondary" onClick={() => { connectEvm({ walletChainType: 'ethereum-only' }) }}>Connect a funding wallet</button>}
         <label className="ui-label">{onramp ? 'Destination asset and chain' : 'Origin asset and chain'}
           <select className="ui-select mt-1" value={asset.label} onChange={e => {
@@ -273,7 +288,7 @@ function PixForm({ onramp, privyWallet }: { onramp: boolean, privyWallet?: strin
           <input className="ui-input ui-input-mono mt-1" value={wallet} readOnly />
         </label>
       </fieldset>
-      <button type="submit" className="ui-btn-primary" disabled={busy || !raw || raw === '0' || (needsDeposit && !pixKey)}>{busy ? 'Preparing…' : onramp ? 'Generate Pix QR' : needsDeposit ? 'Get deposit instructions' : 'Get payout quote'}</button>
+      <button type="submit" className="ui-btn-primary" disabled={busy || !wallet || !raw || raw === '0' || (needsDeposit && !pixKey)}>{busy ? 'Preparing…' : onramp ? 'Generate Pix QR' : needsDeposit ? 'Get deposit instructions' : 'Get payout quote'}</button>
     </form>}
     {error && <p role="alert" className="ui-text-error">{error}</p>}
   </section>
@@ -283,5 +298,5 @@ export default function PixRampTab({ onramp }: { onramp: boolean }) {
   const { client } = useSmartWallets()
   const wallet = client?.account.address
   const privyWallet = wallet && isAddress(wallet) ? wallet : undefined
-  return <PixForm key={String(onramp)} onramp={onramp} privyWallet={privyWallet} />
+  return <PixForm key={String(onramp) + (privyWallet ?? '')} onramp={onramp} privyWallet={privyWallet} />
 }

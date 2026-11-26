@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/start-preview.mjs",
+    "tester": "node scripts/start-preview.mjs",
     "build": "tsc -b && vite build",
+    "test": "node --test scripts/preview.test.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

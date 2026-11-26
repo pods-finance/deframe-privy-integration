@@ -1,4 +1,10 @@
-import snapshot from './catalog.json'
+import reference from './catalog-3500.json'
+import eurc from './catalog-3561.json'
+import { previewPr } from '../../preview'
+
+const catalogs: Record<string, typeof reference> = { '3500': reference, '3561': eurc }
+export const catalogPr = Object.hasOwn(catalogs, previewPr) ? previewPr : '3500'
+export const snapshot = catalogs[catalogPr]
 
 export const assets: Record<string, { chain: string; contract: string; decimals: number }> = snapshot.assets
 export function label(key: string) {
@@ -10,6 +16,7 @@ function family(from: string, to: string, provider: string) {
   const ends = [from, to]
   if (ends.includes('fiat/BRL')) return 'Pix'
   if (ends.includes('fiat/USD')) return 'USD bank'
+  if (ends.includes('base/EURC')) return 'EURC inventory'
   if (from === 'stellar/USDC') return 'Stellar CCTP'
   if (provider === 'cctp') return 'Circle CCTP'
   const tokens = ends.map(key => key.split('/')[1])

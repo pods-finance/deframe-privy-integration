@@ -1,14 +1,14 @@
+import { quoteHeaders, testSafe } from '../../preview'
 import { useEffect, useRef, useState } from 'react'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { decodeFunctionData, erc20Abi, formatUnits, isAddress, isHex } from 'viem'
-import { PIX_TEST_SAFE, gnosisUsdc, stableUsdt0 } from '../Ramp/pixQuote'
+import { gnosisUsdc, stableUsdt0 } from '../Ramp/pixQuote'
 import { humanToRaw, TOKENS } from '../Ramp/rampRoutes'
 import { asRecord, parseResponseBody, readString } from '../Ramp/rampApi'
 import type { SwapQuoteResponse } from './useSwap'
 
 const brla = { symbol: 'BRLA', chain: 'polygon', id: 137, token: TOKENS.brla.polygon, decimals: 18 }
 const brs = { symbol: 'BRS', chain: 'base', id: 8453, token: '0x0000006238e3C7797Ae71827da303560bae1B125', decimals: 6 }
-const previewPr = '3500'
 const reverseRoutes = [
   { ...gnosisUsdc, id: 100, decimals: 6 },
   { ...stableUsdt0, id: 988, decimals: 6 },
@@ -24,7 +24,7 @@ async function prepare(route: typeof routes[number], amount: string, sender: str
   const { from, to } = route
   const search = new URLSearchParams({ originChain: from.chain, tokenIn: from.token, amountIn: amount,
     destinationChain: to.chain, tokenOut: to.token, originAddress: sender, destinationAddress: recipient, preferredProvider: 'pods' })
-  const res = await fetch(`/preview-${previewPr}-quote?` + search.toString(), { headers: { 'x-preview-quote': previewPr }, cache: 'no-store', signal: AbortSignal.timeout(60000) })
+  const res = await fetch('/v2/swap/quote?' + search.toString(), { headers: quoteHeaders, cache: 'no-store', signal: AbortSignal.timeout(60000) })
   const body = await parseResponseBody(res)
   if (!res.ok) throw Error(readString(asRecord(asRecord(body)?.error)?.message) ?? 'Preview quote failed (HTTP ' + String(res.status) + ')')
   const { quote, chainId, transactionData } = body as SwapQuoteResponse
@@ -51,7 +51,7 @@ function SwapForm({ wallet }: { wallet: string }) {
   const [index, setIndex] = useState(() => Math.max(0, routes.findIndex(({ from, to }) => from.chain + '/' + from.symbol === entry.get('from') && to.chain + '/' + to.symbol === entry.get('to'))))
   const [amount, setAmount] = useState(entry.get('amount') ?? '1')
   const requestedRecipient = entry.get('recipient')
-  const initialRecipient = requestedRecipient?.toLowerCase() === PIX_TEST_SAFE.toLowerCase() ? PIX_TEST_SAFE : requestedRecipient && isAddress(requestedRecipient) && requestedRecipient.toLowerCase() !== wallet.toLowerCase() ? requestedRecipient : wallet
+  const initialRecipient = testSafe && requestedRecipient?.toLowerCase() === testSafe.toLowerCase() ? testSafe : requestedRecipient && isAddress(requestedRecipient) && requestedRecipient.toLowerCase() !== wallet.toLowerCase() ? requestedRecipient : wallet
   const [recipient, setRecipient] = useState(initialRecipient)
   const [quote, setQuote] = useState<Awaited<ReturnType<typeof prepare>>>()
   const [busy, setBusy] = useState(false)
@@ -98,9 +98,9 @@ function SwapForm({ wallet }: { wallet: string }) {
       <label className="ui-label">Amount ({route.from.symbol})<input className="ui-input" inputMode="decimal" value={amount} onChange={e => { setAmount(e.target.value); }} /></label>
       <p className="break-all">Funding wallet: {wallet}</p>
       <label className="ui-label">Receive on {route.to.chain}<select className="ui-select" value={recipient} onChange={e => { setRecipient(e.target.value); }}>
-        {initialRecipient.toLowerCase() !== wallet.toLowerCase() && initialRecipient.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={initialRecipient}>Selected recipient · {initialRecipient}</option>}
+        {initialRecipient.toLowerCase() !== wallet.toLowerCase() && initialRecipient.toLowerCase() !== testSafe.toLowerCase() && <option value={initialRecipient}>Selected recipient · {initialRecipient}</option>}
         <option value={wallet}>My Privy wallet · {wallet}</option>
-        {wallet.toLowerCase() !== PIX_TEST_SAFE.toLowerCase() && <option value={PIX_TEST_SAFE}>Test Safe · {PIX_TEST_SAFE}</option>}
+        {testSafe && wallet.toLowerCase() !== testSafe.toLowerCase() && <option value={testSafe}>Test Safe · {testSafe}</option>}
       </select></label>
     </fieldset>
     <button className="ui-btn-secondary" disabled={busy || !raw || raw === '0'} onClick={() => void getQuote()}>Get quote</button>

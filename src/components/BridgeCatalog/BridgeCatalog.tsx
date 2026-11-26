@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { label, selections, type Selection } from './catalog'
+import { catalogPr, label, selections, snapshot, type Selection } from './catalog'
 import QuoteCase from './QuoteCase'
-import snapshot from './catalog.json'
+import { previewPr, previewPath } from '../../preview'
 
-const key = 'deframe:3500:quote-checks:' + snapshot.revision
+const key = `deframe:${previewPr}:quote-checks:` + snapshot.revision
 const unique = (values: string[]) => [...new Set(values)].sort()
 const families = unique(selections.map(s => s.family))
 const initial = selections.find(s => s.from === 'gnosis/USDC' && s.to === 'polygon/BRLA') ?? selections[0]
@@ -35,13 +35,13 @@ export default function BridgeCatalog() {
   return <main className="ui-page ui-surface-warm min-h-screen py-10">
     <div className="mx-auto flex max-w-3xl flex-col gap-5 px-5">
       <nav aria-label="Preview tools" className="flex flex-wrap gap-2">
-        <a className="ui-btn-tab ui-btn-tab-active" aria-current="page" href="/pr-3500/catalog">Route tester</a>
-        <a className="ui-btn-tab" href="/pr-3500/swap">Bridge swap</a>
-        <a className="ui-btn-tab" href="/pr-3500/pix">Pix ramps</a>
-        <a className="ui-btn-tab" href="/pr-3500/ramp">Ramp catalog</a>
-        <a className="ui-btn-tab" href="/pr-3500">Quick quotes</a>
+        <a className="ui-btn-tab ui-btn-tab-active" aria-current="page" href={previewPath + '/catalog'}>Route tester</a>
+        <a className="ui-btn-tab" href={previewPath + '/swap'}>Bridge swap</a>
+        <a className="ui-btn-tab" href={previewPath + '/pix'}>Pix ramps</a>
+        <a className="ui-btn-tab" href={previewPath + '/ramp'}>Ramp catalog</a>
+        <a className="ui-btn-tab" href={previewPath}>Quick quotes</a>
       </nav>
-      <header><h1 className="ui-heading-section">Bridge route tester</h1><p>PR #3500 · {selections.length} combinations · {results.filter(Boolean).length} quoted · {results.filter(r => !r).length} failed this tab</p></header>
+      <header><h1 className="ui-heading-section">Bridge route tester</h1><p>PR #{previewPr} · Reference catalog #{catalogPr} ({snapshot.revision.slice(0, 7)}) · {selections.length} combinations · {results.filter(Boolean).length} quoted · {results.filter(r => !r).length} failed this tab</p></header>
       <section className="ui-panel-shell flex flex-col gap-5 p-6">
         <label className="ui-label">Route family
           <select className="ui-select w-full" value={family} onChange={e => {

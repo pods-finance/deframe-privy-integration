@@ -1,3 +1,4 @@
+import { quoteHeaders } from '../../preview'
 import { useState } from 'react'
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets'
 import { useSignAndSendTransaction, useWallets } from '@privy-io/react-auth/solana'
@@ -8,7 +9,6 @@ import {
 } from '../Strategies/executeStrategyTx'
 
 const SWAP_API_BASE = import.meta.env.VITE_APP_DEFRAME_API_URL || 'http://localhost:4001'
-const SWAP_API_KEY = import.meta.env.VITE_APP_DEFRAME_API_KEY || ''
 
 export interface SwapQuote {
   quoteId: string
@@ -252,7 +252,7 @@ export function useSwap(originAddress?: string) {
       setQuote(null)
 
       const url = new URL('/v2/swap/quote', SWAP_API_BASE)
-      if (import.meta.env.VITE_PIX_PREVIEW === '3500') url.searchParams.set('preferredProvider', 'pods')
+      url.searchParams.set('preferredProvider', 'pods')
       url.searchParams.set('originChain', params.originChain)
       url.searchParams.set('tokenIn', params.tokenIn)
       url.searchParams.set('amountIn', params.amountIn)
@@ -269,7 +269,7 @@ export function useSwap(originAddress?: string) {
 
       const res = await fetch(url.toString(), {
         method: 'GET',
-        headers: import.meta.env.VITE_PIX_PREVIEW === '3500' ? { 'x-preview-quote': '3500' } : SWAP_API_KEY ? { 'x-api-key': SWAP_API_KEY } : {},
+        headers: quoteHeaders,
       })
 
       if (!res.ok) {

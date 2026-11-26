@@ -14,7 +14,10 @@ function optionLabel(s: Selection) {
 
 export default function BridgeCatalog() {
   const [family, setFamily] = useState('')
-  const [row, setRow] = useState(initial)
+  const [row, setRow] = useState(() => {
+    const route = new URLSearchParams(window.location.search).get('route')
+    return selections.find(s => s.id === route) ?? initial
+  })
   const [outcomes, setOutcomes] = useState<Record<string, boolean>>(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(key) ?? '{}') as Record<string, unknown>
